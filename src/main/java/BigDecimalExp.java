@@ -69,11 +69,8 @@ public class BigDecimalExp {
 
         // TODO disallow multiline strings
 
-        // remove spaces and trim opening/closing parentheses
+        // remove spaces
         exp = exp.strip().replaceAll("\\s", "");
-        if(exp.charAt(0) == '(' && exp.charAt(exp.length()-1) == ')') {
-            exp = exp.substring(1, exp.length()-1);
-        }
 
         char[] chars = exp.toCharArray();
 
