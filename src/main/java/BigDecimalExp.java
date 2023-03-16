@@ -1,7 +1,6 @@
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
-import java.util.function.BinaryOperator;
 
 public class BigDecimalExp {
     public static final int defaultScale = 5;
@@ -97,9 +96,6 @@ public class BigDecimalExp {
                     throw new ArithmeticException(String.format("An expression must not start with an operator: %s", exp));
                 }
                 node.op = c;
-
-                // continue at next char
-                start = i + 1;
             }else if(isOp || isEnd) {
                 // get the term that ends here / at the last pos
                 int expLastChar = isEnd ? i : i - 1;

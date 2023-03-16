@@ -1,3 +1,4 @@
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -121,5 +122,14 @@ public class BasicTests {
                         false
                 )
         );
+    }
+
+    @Test
+    public void testOperatorOrder() {
+        assertEquals(BigDecimalExp.operators.get(0), '^');
+        assertEquals(BigDecimalExp.operators.get(1), '*');
+        assertEquals(BigDecimalExp.operators.get(2), '/');
+        assertEquals(BigDecimalExp.operators.get(3), '+');
+        assertEquals(BigDecimalExp.operators.get(4), '-');
     }
 }
