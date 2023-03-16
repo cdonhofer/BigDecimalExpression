@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class BasicTests {
     // MathContext definitions for these tests
@@ -56,9 +57,13 @@ public class BasicTests {
      */
     @ParameterizedTest
     @MethodSource("getReducerExpressions")
-    public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult){
+    public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult, boolean shouldSucceed){
         BigDecimal parsedResult = BigDecimalExp.with(scale, roundingMode).eval(expression, params);
-        assertEquals(parsedResult.compareTo(expectedResult), 0);
+        if(shouldSucceed) {
+            assertEquals(parsedResult.compareTo(expectedResult), 0);
+        } else {
+            assertNotEquals(parsedResult.compareTo(expectedResult), 0);
+        }
     }
 
     private static Stream<Arguments> getReducerExpressions() {
@@ -67,26 +72,53 @@ public class BasicTests {
         BigDecimal b1 = new BigDecimal("2");
         BigDecimal c1 = new BigDecimal("13.73");
 
-        // test two
+        // tests two and three
         BigDecimal a2 = new BigDecimal("17000000000");
         BigDecimal b2 = new BigDecimal("13.5");
         BigDecimal c2 = new BigDecimal("18");
         BigDecimal d2 = new BigDecimal("12");
         BigDecimal e2 = new BigDecimal("13");
+
+        // test four
+        BigDecimal a4 = new BigDecimal("100000");
+        BigDecimal b4 = new BigDecimal("5");
+        BigDecimal c4 = new BigDecimal("18");
+        BigDecimal d4 = new BigDecimal("12");
+        BigDecimal e4 = new BigDecimal("13");
         return Stream.of(
                 Arguments.of(
                         "a ^ 2 *((c/10)+b*c+a)",
                         Map.of("a", a1, "b", b1, "c", c1),
                         a1.pow(2).multiply(
                                 c1.divide(BigDecimal.TEN, scale, roundingMode).add(b1.multiply(c1)).add(a1)
-                        )
+                        ),
+                        true
                 ),
                 Arguments.of(
                         "(17000000000/13.5+1)*10+(18-10/12-13)",
                         Map.of(),
                         (a2.divide(b2, scale, roundingMode).add(BigDecimal.ONE)).multiply(BigDecimal.TEN).add(
                                 c2.subtract(BigDecimal.TEN.divide(d2, scale, roundingMode)).subtract(e2)
-                        )
+                        ),
+                        true
+                ),
+                // negative test by scale change
+                Arguments.of(
+                        "(17000000000/13.5+1)*10+(18-10/12-13)",
+                        Map.of(),
+                        (a2.divide(b2, 1, roundingMode).add(BigDecimal.ONE)).multiply(BigDecimal.TEN).add(
+                                c2.subtract(BigDecimal.TEN.divide(d2, scale, roundingMode)).subtract(e2)
+                        ),
+                        false
+                ),
+                // negative test by value
+                Arguments.of(
+                        "(100000/5+1)*10.00001+(18-10/12-13)",
+                        Map.of(),
+                        (a4.divide(b4, scale, roundingMode).add(BigDecimal.ONE)).multiply(BigDecimal.TEN).add(
+                                c4.subtract(BigDecimal.TEN.divide(d4, scale, roundingMode)).subtract(e4)
+                        ),
+                        false
                 )
         );
     }
