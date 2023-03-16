@@ -2,7 +2,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 import java.util.function.BinaryOperator;
-import java.util.stream.Collectors;
 
 public class BigDecimalExp {
     public static final int defaultScale = 5;
@@ -19,15 +18,13 @@ public class BigDecimalExp {
     static final List<Character> operators = List.of(POW, MULTIPLY, DIVIDE, ADD, SUBTRACT);
 
     // map operators to methods
-    static final Map<Character, BinaryOperator<BigDecimal>> opToMethod = Map.of(
-            POW, BigDecimalExp::pow,
-            MULTIPLY, BigDecimalExp::multiply,
-            DIVIDE, BigDecimalExp::divide,
-            ADD, BigDecimalExp::add,
-            SUBTRACT, BigDecimalExp::subtract
+    static final Map<Character, BigDecimalOperation<BigDecimal, BigDecimal>> opToMethod = Map.of(
+            POW, (a, b, scale, rMode) -> a.pow(b.intValue()),
+            MULTIPLY, (a, b, scale, rMode) -> a.multiply(b),
+            ADD, (a, b, scale, rMode) -> a.add(b),
+            SUBTRACT, (a, b, scale, rMode) -> a.subtract(b),
+            DIVIDE, (a, b, scale, rMode) -> a.divide(b, scale, rMode)
     );
-
-
 
     RoundingMode roundingMode;
     int scale;
@@ -180,14 +177,14 @@ public class BigDecimalExp {
 
         // apply operations
         for(char op : operators) {
-            BinaryOperator<BigDecimal> operation = opToMethod.get(op);
+            BigDecimalOperation<BigDecimal, BigDecimal> operation = opToMethod.get(op);
             for(Node n : nodesPerOp.get(op)) {
                 // keep refs of adjacent nodes
                 Node left = n.prev;
                 Node secondOperand = n.next;
 
                 // write result to right operand, as it possible contains an operation with another node - left one is unlinked
-                secondOperand.val = operation.apply(n.val, secondOperand.val);
+                secondOperand.val = operation.apply(n.val, secondOperand.val, scale, roundingMode);
 
                 // unlink processed node
                 secondOperand.prev = left;
@@ -205,29 +202,6 @@ public class BigDecimalExp {
 
         System.out.println("----------------------------------");
         return startNode.next.val;
-    }
-
-    // todo these could go into a separate class
-    // do I even need them, or could I use simple lambdas calling the bigdecimal instance/member function instead? I think I could!
-    static BigDecimal pow(BigDecimal a, BigDecimal b) {
-        return a.pow(b.intValue());
-    }
-
-
-    static BigDecimal multiply(BigDecimal a, BigDecimal b) {
-        return a.multiply(b);
-    }
-
-    static BigDecimal divide(BigDecimal a, BigDecimal b) {
-        return a.divide(b);
-    }
-
-    static BigDecimal add(BigDecimal a, BigDecimal b) {
-        return a.add(b);
-    }
-
-    static BigDecimal subtract(BigDecimal a, BigDecimal b) {
-        return a.subtract(b);
     }
 
     // utility methods
