@@ -61,9 +61,7 @@ public class BigDecimalExp {
          */
 
         // no. of parentheses
-        int numOpeningParentheses = countOccurrences(exp, '(');
-        int numClosingParentheses = countOccurrences(exp, ')');
-        if(numOpeningParentheses != numClosingParentheses) {
+        if(!validateParentheses(exp)) {
             throw new ArithmeticException("Different no. of opening and closing parentheses");
         }
 
@@ -237,8 +235,15 @@ public class BigDecimalExp {
         return operators.contains(c);
     }
 
-    private int countOccurrences(String haystack, char needle) {
-        return haystack.length() - haystack.replace(""+needle, "").length();
+    private boolean validateParentheses(String haystack) {
+        int opening = 0;
+        int closing = 0;
+        for(char c : haystack.toCharArray()) {
+            if(c == '(') opening++;
+            if(c == ')') closing++;
+        }
+
+        return opening == closing;
     }
 
     private static class Node {
