@@ -34,7 +34,6 @@ public class BigDecimalExp {
     }
 
     public static BigDecimalExp create() {
-        // TODO should this perhaps set nothing at all? might cause trouble or bad code building the divisions
         return new BigDecimalExp(defaultScale, defaultRoundingMode);
     }
 
@@ -42,7 +41,8 @@ public class BigDecimalExp {
         return new BigDecimalExp(scale, roundingMode);
     }
 
-    public BigDecimal eval(String exp, Map.Entry<String, BigDecimal>... params) {
+
+    public BigDecimal eval(String exp, Map.Entry<String, BigDecimal>... params) throws BigDecimalExpException {
         Map<String, BigDecimal> paramsMap = new HashMap<>();
         for(Map.Entry<String, BigDecimal> param : params) {
             paramsMap.put(param.getKey(), param.getValue());
@@ -51,7 +51,15 @@ public class BigDecimalExp {
         return eval(exp, paramsMap);
     }
 
-    public BigDecimal eval(String exp, Map<String, BigDecimal> params) throws ArithmeticException {
+    public BigDecimal eval(String exp, Map<String, BigDecimal> params) throws BigDecimalExpException {
+        try {
+            return evaluate(exp, params);
+        } catch (Exception e) {
+            throw new BigDecimalExpException(exp, e);
+        }
+    }
+
+    public BigDecimal evaluate(String exp, Map<String, BigDecimal> params) throws Exception {
         /*
         validate input
          */
@@ -60,8 +68,6 @@ public class BigDecimalExp {
         if(!validateParentheses(exp)) {
             throw new ArithmeticException("Different no. of opening and closing parentheses");
         }
-
-        // TODO disallow multiline strings
 
         // remove spaces
         exp = exp.strip().replaceAll("\\s", "");
@@ -178,6 +184,10 @@ public class BigDecimalExp {
                 // keep refs of adjacent nodes
                 Node left = n.prev;
                 Node secondOperand = n.next;
+
+                if(secondOperand == null) {
+                    throw new ArithmeticException(String.format("Illegal Expression: missing right-hand operand in expression %s", exp));
+                }
 
                 // write result to right operand, as it possible contains an operation with another node - left one is unlinked
                 secondOperand.val = operation.apply(n.val, secondOperand.val, scale, roundingMode);

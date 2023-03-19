@@ -23,7 +23,7 @@ public class BasicTests {
      */
     @ParameterizedTest
     @MethodSource("getParserExpressions")
-    public void testParser(String expression, Map<String, BigDecimal> params, boolean shouldSucceed){
+    public void testParser(String expression, Map<String, BigDecimal> params, boolean shouldSucceed) throws BigDecimalExpException {
         try {
             BigDecimal parsedResult = BigDecimalExp.create().eval(expression, params);
         } catch (Exception e) {
@@ -46,8 +46,10 @@ public class BasicTests {
                 Arguments.of("0.014000 | 2 *((13.73/10)+2*13.73+0.014000)", Map.of(), false), // unknown operator
                 Arguments.of("0.014000 ^^ 2 *((13.73/10)+2*13.73+0.014000)", Map.of(), false), // double operator
                 Arguments.of("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000", Map.of(), false), // missing parenthesis
-                Arguments.of("0.014000 ^ 2 ((13.73/10)+2*13.73+0.014000)", Map.of(), false), // implicit multiplication,
-                Arguments.of("(100/10) * (3+2)", Map.of(), true) // // missing parenthesis
+                Arguments.of("0.014000 ^ 2 ((13.73/10)+2*13.73+0.014000)", Map.of(), false), // implicit multiplication
+                Arguments.of("(100/10) * (3+2)", Map.of(), true),  // missing parenthesis
+                Arguments.of("(100/10) * (3+2)\n+2", Map.of(), true), // new line
+                Arguments.of("(100/10) * (3+2)-", Map.of(), false) // operator as last symbol
         );
     }
 
@@ -58,7 +60,7 @@ public class BasicTests {
      */
     @ParameterizedTest
     @MethodSource("getReducerExpressions")
-    public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult, boolean shouldSucceed){
+    public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult, boolean shouldSucceed) throws BigDecimalExpException {
         BigDecimal parsedResult = BigDecimalExp.with(scale, roundingMode).eval(expression, params);
         if(shouldSucceed) {
             assertEquals(parsedResult.compareTo(expectedResult), 0);
