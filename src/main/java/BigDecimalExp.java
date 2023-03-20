@@ -25,33 +25,49 @@ public class BigDecimalExp {
             DIVIDE, (a, b, scale, rMode) -> a.divide(b, scale, rMode)
     );
 
+    /*
+    * instance fields
+    */
     RoundingMode roundingMode;
     int scale;
+    Map<String, BigDecimal> params = new HashMap<>();
+    String exp;
 
     public BigDecimalExp(int scale, RoundingMode roundingMode) {
         this.roundingMode = roundingMode;
         this.scale = scale;
     }
 
-    public static BigDecimalExp create() {
-        return new BigDecimalExp(defaultScale, defaultRoundingMode);
+    public BigDecimalExp() {
+        this.roundingMode = defaultRoundingMode;
+        this.scale = defaultScale;
     }
 
-    public static BigDecimalExp with(int scale, RoundingMode roundingMode) {
-        return new BigDecimalExp(scale, roundingMode);
-    }
-
-
-    public BigDecimal eval(String exp, Map.Entry<String, BigDecimal>... params) throws BigDecimalExpException {
+    public BigDecimalExp parse(String exp, Map.Entry<String, BigDecimal>... params) throws BigDecimalExpException {
         Map<String, BigDecimal> paramsMap = new HashMap<>();
         for(Map.Entry<String, BigDecimal> param : params) {
             paramsMap.put(param.getKey(), param.getValue());
         }
 
-        return eval(exp, paramsMap);
+        return parse(exp, paramsMap);
     }
 
-    public BigDecimal eval(String exp, Map<String, BigDecimal> params) throws BigDecimalExpException {
+    public BigDecimalExp parse(String exp, Map<String, BigDecimal> params) throws BigDecimalExpException {
+        this.exp = exp;
+        this.params = params;
+
+        return this;
+    }
+
+    public boolean isValid() {
+        //TODO validate symbols(regexp.)
+        // missing or null parameters - is that even possible efficiently? simply running eval in try/catch might be faster
+        // but wouldn't provide the info - or would it!?
+
+        return validateParentheses(exp);
+    }
+
+    public BigDecimal eval() throws BigDecimalExpException {
         try {
             return evaluate(exp, params);
         } catch (Exception e) {
@@ -59,12 +75,10 @@ public class BigDecimalExp {
         }
     }
 
-    public BigDecimal evaluate(String exp, Map<String, BigDecimal> params) throws Exception {
+    private BigDecimal evaluate(String exp, Map<String, BigDecimal> params) {
         /*
         validate input
          */
-
-        // no. of parentheses
         if(!validateParentheses(exp)) {
             throw new ArithmeticException("Different no. of opening and closing parentheses");
         }
@@ -138,7 +152,7 @@ public class BigDecimalExp {
                 // but ignore empty parentheses: ()
                 if(pEnd - i > 1) {
                     // add sub expression and continue
-                    BigDecimal subExp = eval(new String(Arrays.copyOfRange(chars, i+1, pEnd)), params);
+                    BigDecimal subExp = evaluate(new String(Arrays.copyOfRange(chars, i+1, pEnd)), params);
                     node.next = new Node(subExp, null);
                     node.next.prev = node;
                     node = node.next;
@@ -155,27 +169,6 @@ public class BigDecimalExp {
             start = i + 1;
 
         }
-        /*
-         * possible problems
-         * operator in the last position!?
-         */
-
-        System.out.println("----------------------------------");
-
-        System.out.println("found these terms: ");
-        node = startNode.next;
-        while(node != null) {
-            System.out.println(" "+node.val.toString()+" "+Optional.ofNullable(node.op).orElse(' '));
-            node = node.next;
-        }
-//
-//        System.out.println("----------------------------------");
-//
-//        System.out.println("found these operator nodes: ");
-//        operators.forEach(op -> {
-//            System.out.println("Operator "+op+"("+nodesPerOp.get(op).size()+")");
-//            System.out.println(nodesPerOp.get(op).stream().map(n -> ""+n.val+n.op+n.next.val).collect(Collectors.joining(";")));
-//        });
 
         // apply operations
         for(char op : operators) {
@@ -197,16 +190,7 @@ public class BigDecimalExp {
                 left.next = secondOperand;
             }
         }
-        System.out.println("----------------------------------");
 
-        System.out.println("final terms: ");
-        node = startNode.next;
-        while(node != null) {
-            System.out.println(" "+node.val.toString()+" "+Optional.ofNullable(node.op).orElse(' '));
-            node = node.next;
-        }
-
-        System.out.println("----------------------------------");
         return startNode.next.val;
     }
 

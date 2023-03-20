@@ -9,11 +9,8 @@ public class Main {
 
 
         BigDecimal res = a.pow(2).multiply(c.divide(BigDecimal.TEN).add(b.multiply(c).add(a)));
-        try {
-            BigDecimal easyRes = BigDecimalExp.create().eval("a ^ 2 *((c/10)+b*c+a)", Map.of("a", a, "b", b, "c", c));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        BigDecimal easyRes = new BigDecimalExp().parse("a ^ 2 *((c/10)+b*c+a)", Map.of("a", a, "b", b, "c", c)).eval();
+
 
         System.out.println("target result: ");
         System.out.println(new BigDecimal("0.000196000000").multiply(new BigDecimal("28.833")));

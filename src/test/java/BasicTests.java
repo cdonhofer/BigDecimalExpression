@@ -23,9 +23,9 @@ public class BasicTests {
      */
     @ParameterizedTest
     @MethodSource("getParserExpressions")
-    public void testParser(String expression, Map<String, BigDecimal> params, boolean shouldSucceed) throws BigDecimalExpException {
+    public void testParser(String expression, Map<String, BigDecimal> params, boolean shouldSucceed) {
         try {
-            BigDecimal parsedResult = BigDecimalExp.create().eval(expression, params);
+            BigDecimal parsedResult = new BigDecimalExp().parse(expression, params).eval();
         } catch (Exception e) {
             if(shouldSucceed) {
                throw e;
@@ -60,8 +60,8 @@ public class BasicTests {
      */
     @ParameterizedTest
     @MethodSource("getReducerExpressions")
-    public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult, boolean shouldSucceed) throws BigDecimalExpException {
-        BigDecimal parsedResult = BigDecimalExp.with(scale, roundingMode).eval(expression, params);
+    public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult, boolean shouldSucceed) {
+        BigDecimal parsedResult = new BigDecimalExp(scale, roundingMode).parse(expression, params).eval();
         if(shouldSucceed) {
             assertEquals(parsedResult.compareTo(expectedResult), 0);
         } else {
