@@ -5,11 +5,15 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BasicTests {
     // MathContext definitions for these tests
@@ -133,5 +137,14 @@ public class BasicTests {
         assertEquals(BigDecimalExp.operators.get(2), '/');
         assertEquals(BigDecimalExp.operators.get(3), '+');
         assertEquals(BigDecimalExp.operators.get(4), '-');
+    }
+
+    // TODO make this test more exhaustive
+    @Test
+    public void testRegex() {
+        List<String> params = BigDecimalExp.extractVariables("a ^ 2 *myVar+SOMETHING_BIG((c/10)+b*c+a)");
+        List<String> expected = List.of("a", "myVar", "SOMETHING_BIG", "c", "b");
+
+        assertTrue(params.containsAll(expected));
     }
 }

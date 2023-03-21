@@ -1,6 +1,9 @@
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class BigDecimalExp {
     public static final int defaultScale = 5;
@@ -12,6 +15,8 @@ public class BigDecimalExp {
     public static final char MULTIPLY = '*';
     public static final char DIVIDE = '/';
     public static final char POW = '^';
+
+    public static final String VALID_PARAM_REGEX = "[a-zA-Z_$][a-zA-Z_$0-9]*";
 
     // list of operators for easier handling - the order is vital!
     static final List<Character> operators = List.of(POW, MULTIPLY, DIVIDE, ADD, SUBTRACT);
@@ -61,10 +66,12 @@ public class BigDecimalExp {
 
     public boolean isValid() {
         //TODO validate symbols(regexp.)
-        // missing or null parameters - is that even possible efficiently? simply running eval in try/catch might be faster
-        // but wouldn't provide the info - or would it!?
 
-        return validateParentheses(exp);
+        // missing or null parameters
+        List<String> vars = extractVariables(exp);
+        boolean allVarsProvided = params.keySet().containsAll(vars);
+
+        return allVarsProvided && validateParentheses(exp);
     }
 
     public BigDecimal eval() throws BigDecimalExpException {
@@ -75,7 +82,7 @@ public class BigDecimalExp {
         }
     }
 
-    private BigDecimal evaluate(String exp, Map<String, BigDecimal> params) {
+    private BigDecimal evaluate(String exp, Map<String, BigDecimal> params) throws ArithmeticException, NumberFormatException {
         /*
         validate input
          */
@@ -194,7 +201,14 @@ public class BigDecimalExp {
         return startNode.next.val;
     }
 
-    // utility methods
+    public static List<String> extractVariables(String exp) {
+         return Pattern.compile(VALID_PARAM_REGEX)
+                .matcher(exp)
+                .results()
+                .map(MatchResult::group)
+                .collect(Collectors.toList());
+    }
+
     private boolean isOperator(Character c) {
         return operators.contains(c);
     }
