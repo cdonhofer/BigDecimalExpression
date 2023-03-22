@@ -182,7 +182,7 @@ public class BasicTests {
      */
     @Test
     public void testIllegalCharDetection() {
-        assertFalse(BigDecimalExp.containsIllegalChar("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000)"));
+        assertFalse(BigDecimalExp.containsIllegalChar("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000) - 1"));
         assertTrue(BigDecimalExp.containsIllegalChar("0.014000 ^ 2: *((13.73/10)+2*13.73+0.014000)")); // colon
         assertTrue(BigDecimalExp.containsIllegalChar("0,014000 ^ 2 *((13.73/10)+2*13.73+0.014000)")); // comma
         assertTrue(BigDecimalExp.containsIllegalChar("0.014000 ^ 2 *([13.73/10]+2*13.73+0.014000)")); // square brackets
