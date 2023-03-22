@@ -5,12 +5,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.MatchResult;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -67,9 +63,9 @@ public class BasicTests {
     public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult, boolean shouldSucceed) {
         BigDecimal parsedResult = new BigDecimalExp(scale, roundingMode).parse(expression, params).eval();
         if(shouldSucceed) {
-            assertEquals(parsedResult.compareTo(expectedResult), 0);
+            assertEquals(0, parsedResult.compareTo(expectedResult));
         } else {
-            assertNotEquals(parsedResult.compareTo(expectedResult), 0);
+            assertNotEquals(0, parsedResult.compareTo(expectedResult));
         }
     }
 
@@ -126,6 +122,39 @@ public class BasicTests {
                                 c4.subtract(BigDecimal.TEN.divide(d4, scale, roundingMode)).subtract(e4)
                         ),
                         false
+                ),
+                // implicit multiplication with parentheses
+                Arguments.of(
+                        "(100/10)(100)",
+                        Map.of(),
+                        new BigDecimal("1000"),
+                        true
+                ),
+                Arguments.of(
+                        "10 (100)",
+                        Map.of(),
+                        new BigDecimal("1000"),
+                        true
+                ),
+                Arguments.of(
+                        "(5-2)(5+2)",
+                        Map.of(),
+                        new BigDecimal("21"),
+                        true
+                ),
+                // implicit multiplication with just one set of parentheses
+                Arguments.of(
+                        "3 (5+2)",
+                        Map.of(),
+                        new BigDecimal("21"),
+                        true
+                ),
+                // avoid false implicit multiplication
+                Arguments.of(
+                        "3+(5+2)",
+                        Map.of(),
+                        new BigDecimal("10"),
+                        true
                 )
         );
     }
@@ -141,10 +170,25 @@ public class BasicTests {
 
     // TODO make this test more exhaustive
     @Test
-    public void testRegex() {
+    public void testVariableExtraction() {
         List<String> params = BigDecimalExp.extractVariables("a ^ 2 *myVar+SOMETHING_BIG((c/10)+b*c+a)");
         List<String> expected = List.of("a", "myVar", "SOMETHING_BIG", "c", "b");
 
         assertTrue(params.containsAll(expected));
+    }
+
+    /**
+     * tests the illegal char detection, but minimalistically (i.e. for errors expected to be common)
+     */
+    @Test
+    public void testIllegalCharDetection() {
+        assertFalse(BigDecimalExp.containsIllegalChar("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000)"));
+        assertTrue(BigDecimalExp.containsIllegalChar("0.014000 ^ 2: *((13.73/10)+2*13.73+0.014000)")); // colon
+        assertTrue(BigDecimalExp.containsIllegalChar("0,014000 ^ 2 *((13.73/10)+2*13.73+0.014000)")); // comma
+        assertTrue(BigDecimalExp.containsIllegalChar("0.014000 ^ 2 *([13.73/10]+2*13.73+0.014000)")); // square brackets
+        assertTrue(BigDecimalExp.containsIllegalChar("0.014000 ^ 2 *((13.73/10)+2*13.7>3+0.014000)<")); // less/larger than signs
+        assertTrue(BigDecimalExp.containsIllegalChar("0.014000 ^ 2%1 *((13.73/10)+2*13.73+0.014000)")); // percent sign/modulo operator
+        assertTrue(BigDecimalExp.containsIllegalChar("{0.014000} ^ 2 *((13.73/10)+2*13.73+0.014000)")); // curly braces
+        assertTrue(BigDecimalExp.containsIllegalChar("{0.014000} ^ 2 *\\((13.73/10)+2*13.73+0.014000)")); // backslash
     }
 }

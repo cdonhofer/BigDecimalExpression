@@ -16,7 +16,8 @@ public class BigDecimalExp {
     public static final char DIVIDE = '/';
     public static final char POW = '^';
 
-    public static final String VALID_PARAM_REGEX = "[a-zA-Z_$][a-zA-Z_$0-9]*";
+    public static final String VALID_VAR_REGEX = "[a-zA-Z_$][a-zA-Z_$0-9]*";
+    public static final String ILLEGAL_CHARS_REGEX = "[^a-zA-Z0-9.\\-+*/^_\\s()]";
 
     // list of operators for easier handling - the order is vital!
     static final List<Character> operators = List.of(POW, MULTIPLY, DIVIDE, ADD, SUBTRACT);
@@ -35,7 +36,7 @@ public class BigDecimalExp {
     */
     RoundingMode roundingMode;
     int scale;
-    Map<String, BigDecimal> params = new HashMap<>();
+    Map<String, BigDecimal> vars = new HashMap<>();
     String exp;
 
     public BigDecimalExp(int scale, RoundingMode roundingMode) {
@@ -48,41 +49,47 @@ public class BigDecimalExp {
         this.scale = defaultScale;
     }
 
-    public BigDecimalExp parse(String exp, Map.Entry<String, BigDecimal>... params) throws BigDecimalExpException {
-        Map<String, BigDecimal> paramsMap = new HashMap<>();
-        for(Map.Entry<String, BigDecimal> param : params) {
-            paramsMap.put(param.getKey(), param.getValue());
+    public BigDecimalExp parse(String exp, Map.Entry<String, BigDecimal>... vars) throws BigDecimalExpException {
+        Map<String, BigDecimal> varsMap = new HashMap<>();
+        for(Map.Entry<String, BigDecimal> var : vars) {
+            varsMap.put(var.getKey(), var.getValue());
         }
 
-        return parse(exp, paramsMap);
+        return parse(exp, varsMap);
     }
 
-    public BigDecimalExp parse(String exp, Map<String, BigDecimal> params) throws BigDecimalExpException {
+    public BigDecimalExp parse(String exp, Map<String, BigDecimal> vars) throws BigDecimalExpException {
         this.exp = exp;
-        this.params = params;
+        this.vars = vars;
 
         return this;
     }
 
+    /**
+     * state-test method that can be used before calling the eval method
+     * tests for: illegal characters in the expression, missing variables or null entries in the vars map
+     * @return true if all mentioned checks succeed; else false
+     */
     public boolean isValid() {
-        //TODO validate symbols(regexp.)
+        // validate symbols
+        boolean charsAreLegal = !containsIllegalChar(exp);
 
-        // missing or null parameters
+        // missing or null vars
         List<String> vars = extractVariables(exp);
-        boolean allVarsProvided = params.keySet().containsAll(vars);
+        boolean allVarsProvided = this.vars.keySet().containsAll(vars);
 
-        return allVarsProvided && validateParentheses(exp);
+        return charsAreLegal && allVarsProvided && validateParentheses(exp);
     }
 
     public BigDecimal eval() throws BigDecimalExpException {
         try {
-            return evaluate(exp, params);
+            return evaluate(exp, vars);
         } catch (Exception e) {
             throw new BigDecimalExpException(exp, e);
         }
     }
 
-    private BigDecimal evaluate(String exp, Map<String, BigDecimal> params) throws ArithmeticException, NumberFormatException {
+    private BigDecimal evaluate(String exp, Map<String, BigDecimal> vars) throws ArithmeticException, NumberFormatException {
         /*
         validate input
          */
@@ -125,25 +132,29 @@ public class BigDecimalExp {
                 node.op = c;
             }else if(isOp || isEnd) {
                 // get the term that ends here / at the last pos
-                int expLastChar = isEnd ? i : i - 1;
-                String currentTerm = new String(Arrays.copyOfRange(chars, start, expLastChar + 1)).trim();
-                // check if term is a parameter and if so, get it; else, treat term as value and create BigDecimal
-                BigDecimal val = Optional
-                        .ofNullable(params.get(currentTerm))
-                        .orElseGet(() -> new BigDecimal(currentTerm));
+                BigDecimal val = getCurrentVal(chars, start, i, isEnd);
 
                 node.next = new Node(val, isEnd ? null : c);
                 node.next.prev = node;
                 node = node.next;
             } else { // start of sub-expression
 
-                // if symbol before this parenthesis was neither an operator, nor start of expression, nor another parenthesis
-                // this is an implicit multiplication, which isn't supported by now
-                // when(if ever) implementing this, take into account all cases: terms from sub-expressions will be inside
+                // if symbol before this parenthesis was neither an operator, nor start of expression, nor another opening parenthesis
+                // this is an implicit multiplication
+                // terms from sub-expressions will be inside
                 // a node already, which is simply missing the operator
                 // else (i.e. the node before has an operator), fetch the ongoing term and add a multiplication node
                 if(i != 0 && !isOperator(chars[i-1]) && chars[i-1] != '(') {
-                    throw new ArithmeticException("Implicit multiplication is currently not supported. Please use the multiplication operator");
+                    if(node.op != null) {
+                        BigDecimal val = getCurrentVal(chars, start, i, false);
+                        node.next = new Node(val, MULTIPLY);
+                        node.next.prev = node;
+                        node = node.next;
+                    } else {
+                        node.op = MULTIPLY;
+                    }
+                    //add to occ. map
+                    nodesPerOp.get(MULTIPLY).add(node);
                 }
 
 
@@ -159,7 +170,7 @@ public class BigDecimalExp {
                 // but ignore empty parentheses: ()
                 if(pEnd - i > 1) {
                     // add sub expression and continue
-                    BigDecimal subExp = evaluate(new String(Arrays.copyOfRange(chars, i+1, pEnd)), params);
+                    BigDecimal subExp = evaluate(new String(Arrays.copyOfRange(chars, i+1, pEnd)), vars);
                     node.next = new Node(subExp, null);
                     node.next.prev = node;
                     node = node.next;
@@ -176,6 +187,14 @@ public class BigDecimalExp {
             start = i + 1;
 
         }
+//        System.out.println("----------------------------------");
+//
+//        System.out.println("found these terms: ");
+//        node = startNode.next;
+//        while(node != null) {
+//            System.out.println(" "+node.val.toString()+" "+Optional.ofNullable(node.op).orElse(' '));
+//            node = node.next;
+//        }
 
         // apply operations
         for(char op : operators) {
@@ -197,16 +216,40 @@ public class BigDecimalExp {
                 left.next = secondOperand;
             }
         }
-
+//        System.out.println("----------------------------------");
+//
+//        System.out.println("final terms: ");
+//        node = startNode.next;
+//        while(node != null) {
+//            System.out.println(" "+node.val.toString()+" "+Optional.ofNullable(node.op).orElse(' '));
+//            node = node.next;
+//        }
+//
+//        System.out.println("----------------------------------");
         return startNode.next.val;
     }
 
+    private BigDecimal getCurrentVal(char[] chars, int start, int i, boolean isEnd) {
+        int expLastChar = isEnd ? i : i - 1;
+        String currentTerm = new String(Arrays.copyOfRange(chars, start, expLastChar + 1)).trim();
+        // check if term is a variable and if so, get it; else, treat term as value and create BigDecimal
+        return Optional
+                .ofNullable(vars.get(currentTerm))
+                .orElseGet(() -> new BigDecimal(currentTerm));
+    }
+
     public static List<String> extractVariables(String exp) {
-         return Pattern.compile(VALID_PARAM_REGEX)
+         return Pattern.compile(VALID_VAR_REGEX)
                 .matcher(exp)
                 .results()
                 .map(MatchResult::group)
                 .collect(Collectors.toList());
+    }
+
+    public static boolean containsIllegalChar(String exp) {
+        return Pattern.compile(ILLEGAL_CHARS_REGEX)
+                .matcher(exp)
+                .find();
     }
 
     private boolean isOperator(Character c) {
