@@ -86,25 +86,24 @@ public class BigDecimalExp {
     }
 
     public BigDecimal eval() throws BigDecimalExpException {
-        /*
-        validate input
-         */
-        if(!validateParentheses(exp)) {
-            throw new ArithmeticException("Different no. of opening and closing parentheses");
-        }
+        // the index is maintained globally, due to the recursive nature of the evaluation
         currInd = 0;
         try {
-            return evaluate(0);
+            if(!validateParentheses(exp)) {
+                throw new ArithmeticException("Different no. of opening and closing parentheses");
+            }
+            return evaluate();
         } catch (Exception e) {
             throw new BigDecimalExpException(exp, e);
         }
     }
 
-    private BigDecimal evaluate(int startInd) throws ArithmeticException, NumberFormatException {
+    private BigDecimal evaluate() throws ArithmeticException, NumberFormatException {
 
 
         /*
          * parse, each opening parenthesis creates a recursive call of this method
+         * to immediately reduce the contained sub-expression to a single BigDecimal
          */
         // collect operations as a linked list with a dummy start node
         Node startNode = new Node(null, ' ');
@@ -114,15 +113,17 @@ public class BigDecimalExp {
         Map<Character, List<Node>> nodesPerOp = new HashMap<>();
         operators.forEach(op -> nodesPerOp.put(op, new ArrayList<>()));
 
-        int start = startInd;
-        for(currInd = startInd; currInd < chars.length; currInd++) {
+        // iterate over the characters of this (sub-)expression
+        int start = currInd;
+        while(currInd < chars.length) {
             char c = chars[currInd];
             boolean isOp = isOperator(c);
             boolean isEnd = currInd == chars.length-1;
             boolean isEndOfSubExpr = c == ')';
 
-            // within a term / expression: continue
+            // within a term: continue
             if(!isEnd && !isEndOfSubExpr && c != '(' && !isOp) {
+                currInd++;
                 continue;
             }
 
@@ -130,6 +131,15 @@ public class BigDecimalExp {
             if(isOp && start == currInd) {
                 if(node == startNode){
                     throw new ArithmeticException(String.format("An expression must not start with an operator: %s", exp));
+                }
+                // do not silently accept duplicate operators
+                if(node.op != null) {
+                    throw new ArithmeticException(
+                            String.format(
+                                    "Value was already assigned an operator; check for duplicate operators (value: %s, op. 1: %s, op. 2: %s): %s",
+                                    node.val, node.op, c, exp
+                            )
+                    );
                 }
                 node.op = c;
             }else if(isOp || isEnd || isEndOfSubExpr) {
@@ -140,8 +150,6 @@ public class BigDecimalExp {
                 node.next.prev = node;
                 node = node.next;
             } else { // start of sub-expression
-
-
 
                 // handle empty parentheses sub-expression: ()
                 if(chars[currInd+1] == ')') {
@@ -171,7 +179,8 @@ public class BigDecimalExp {
                 // parse sub-expression
                 // but ignore empty parentheses: ()
                 int prevInd = currInd;
-                BigDecimal subExp = evaluate(currInd+1);
+                currInd++;
+                BigDecimal subExp = evaluate();
                 if(currInd - prevInd > 1) {
                     // add sub expression and continue
                     node.next = new Node(subExp, null);
@@ -185,14 +194,16 @@ public class BigDecimalExp {
                 nodesPerOp.get(c).add(node);
             }
 
+
+
             // end loop if we've reached the end of a sub-expression
             if(isEndOfSubExpr) {
                 break;
             }
 
-            // continue at next char
+            // else, continue at next char
             start = currInd + 1;
-
+            currInd++;
         }
         System.out.println("----------------------------------");
 
@@ -204,6 +215,22 @@ public class BigDecimalExp {
         }
 
         // apply operations
+        BigDecimal result = applyOperations(startNode, nodesPerOp);
+        System.out.println("----------------------------------");
+
+        System.out.println("final terms: ");
+        node = startNode.next;
+        while(node != null) {
+            System.out.println(" "+node.val.toString()+" "+Optional.ofNullable(node.op).orElse(' '));
+            node = node.next;
+        }
+
+        System.out.println("----------------------------------");
+        return result;
+    }
+
+    private BigDecimal applyOperations(Node startNode, Map<Character, List<Node>> nodesPerOp) {
+        BigDecimal result = null;
         for(char op : operators) {
             BigDecimalOperation<BigDecimal, BigDecimal> operation = opToMethod.get(op);
             for(Node n : nodesPerOp.get(op)) {
@@ -223,16 +250,7 @@ public class BigDecimalExp {
                 left.next = secondOperand;
             }
         }
-        System.out.println("----------------------------------");
 
-        System.out.println("final terms: ");
-        node = startNode.next;
-        while(node != null) {
-            System.out.println(" "+node.val.toString()+" "+Optional.ofNullable(node.op).orElse(' '));
-            node = node.next;
-        }
-
-        System.out.println("----------------------------------");
         return startNode.next.val;
     }
 

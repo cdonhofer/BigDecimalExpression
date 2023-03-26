@@ -24,15 +24,12 @@ public class BasicTests {
     @ParameterizedTest
     @MethodSource("getParserExpressions")
     public void testParser(String expression, Map<String, BigDecimal> params, boolean shouldSucceed) {
-        try {
+        if(!shouldSucceed) {
+            assertThrows(BigDecimalExpException.class, () -> {
+                BigDecimal parsedResult = new BigDecimalExp().parse(expression, params).eval();
+            }, "The expression should have thrown an exception: "+expression);
+        } else {
             BigDecimal parsedResult = new BigDecimalExp().parse(expression, params).eval();
-        } catch (Exception e) {
-            if(shouldSucceed) {
-               throw e;
-            } else {
-                System.out.println("exception: "+e.getCause());
-                e.printStackTrace();
-            }
         }
     }
 
@@ -47,7 +44,7 @@ public class BasicTests {
                 Arguments.of("0.014000 | 2 *((13.73/10)+2*13.73+0.014000)", Map.of(), false), // unknown operator
                 Arguments.of("0.014000 ^^ 2 *((13.73/10)+2*13.73+0.014000)", Map.of(), false), // double operator
                 Arguments.of("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000", Map.of(), false), // missing parenthesis
-                Arguments.of("0.014000 ^ 2 ((13.73/10)+2*13.73+0.014000)", Map.of(), false), // implicit multiplication
+                Arguments.of("0.014000 ^ 2 ((13.73/10)+2*13.73+0.014000)", Map.of(), true), // implicit multiplication
                 Arguments.of("(100/10) * (3+2)", Map.of(), true),
                 Arguments.of("(100/10) * (3+2)\n+2", Map.of(), true), // new line
                 Arguments.of("(100/10) * (3+2)-", Map.of(), false) // operator as last symbol
