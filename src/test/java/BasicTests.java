@@ -26,10 +26,10 @@ public class BasicTests {
     public void testParser(String expression, Map<String, BigDecimal> params, boolean shouldSucceed) {
         if(!shouldSucceed) {
             assertThrows(BigDecimalExpException.class, () -> {
-                BigDecimal parsedResult = new BigDecimalExp().parse(expression, params).eval();
+                BigDecimal parsedResult = new BigDecimalExp().debug().parse(expression, params).eval();
             }, "The expression should have thrown an exception: "+expression);
         } else {
-            BigDecimal parsedResult = new BigDecimalExp().parse(expression, params).eval();
+            BigDecimal parsedResult = new BigDecimalExp().debug().parse(expression, params).eval();
         }
     }
 
@@ -59,7 +59,7 @@ public class BasicTests {
     @ParameterizedTest
     @MethodSource("getReducerExpressions")
     public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult, boolean shouldSucceed) {
-        BigDecimal parsedResult = new BigDecimalExp(scale, roundingMode).parse(expression, params).eval();
+        BigDecimal parsedResult = new BigDecimalExp(scale, roundingMode).debug().parse(expression, params).eval();
         if(shouldSucceed) {
             assertEquals(0, parsedResult.compareTo(expectedResult));
         } else {
@@ -87,6 +87,12 @@ public class BasicTests {
         BigDecimal d4 = new BigDecimal("12");
         BigDecimal e4 = new BigDecimal("13");
         return Stream.of(
+                Arguments.of(
+                        "10*2.5",
+                        Map.of(),
+                        BigDecimal.TEN.multiply(new BigDecimal("2.5")),
+                        true
+                ),
                 Arguments.of(
                         "a ^ 2 *((c/10)+b*c+a)",
                         Map.of("a", a1, "b", b1, "c", c1),
