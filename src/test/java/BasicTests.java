@@ -24,30 +24,28 @@ public class BasicTests {
     @ParameterizedTest
     @MethodSource("getParserExpressions")
     public void testParser(String expression, Map<String, BigDecimal> params, boolean shouldSucceed) {
-        try {
-            BigDecimal parsedResult = new BigDecimalExp().parse(expression, params).eval();
-        } catch (Exception e) {
-            if(shouldSucceed) {
-               throw e;
-            } else {
-                System.out.println("exception: "+e.getCause());
-                e.printStackTrace();
-            }
+        if(!shouldSucceed) {
+            assertThrows(BigDecimalExpException.class, () -> {
+                BigDecimal parsedResult = new BigDecimalExp().debug().parse(expression, params).eval();
+            }, "The expression should have thrown an exception: "+expression);
+        } else {
+            BigDecimal parsedResult = new BigDecimalExp().debug().parse(expression, params).eval();
         }
     }
 
     private static Stream<Arguments> getParserExpressions() {
         return Stream.of(
+                Arguments.of("2*(100/10)", Map.of(), true), // minimal term with sub expression
                 Arguments.of("a ^ 2 *((c/10)+b*c+a)", Map.of("a", new BigDecimal("0.014000"), "b", new BigDecimal("2"), "c", new BigDecimal("13.73")), true),
                 Arguments.of("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000)", Map.of(), true),
-                Arguments.of("0.014000 ^ 2*() *((13.73/10)+2*13.73+0.014000)", Map.of(), true), // ()
+                Arguments.of("0.014000 ^ 2*() *((13.73/10)+2*13.73+0.014000)", Map.of(), false), // ()
                 Arguments.of("a ^ 2 *((c/10)+b*c+a)", Map.of("a", new BigDecimal("0.014000"), "b", new BigDecimal("2")), false), // missing parameter
                 Arguments.of("0,014000 ^ 2 *((13.73/10)+2*13.73+0.014000)", Map.of(), false), // wrong decimal separator
                 Arguments.of("0.014000 | 2 *((13.73/10)+2*13.73+0.014000)", Map.of(), false), // unknown operator
                 Arguments.of("0.014000 ^^ 2 *((13.73/10)+2*13.73+0.014000)", Map.of(), false), // double operator
                 Arguments.of("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000", Map.of(), false), // missing parenthesis
-                Arguments.of("0.014000 ^ 2 ((13.73/10)+2*13.73+0.014000)", Map.of(), false), // implicit multiplication
-                Arguments.of("(100/10) * (3+2)", Map.of(), true),  // missing parenthesis
+                Arguments.of("0.014000 ^ 2 ((13.73/10)+2*13.73+0.014000)", Map.of(), true), // implicit multiplication
+                Arguments.of("(100/10) * (3+2)", Map.of(), true),
                 Arguments.of("(100/10) * (3+2)\n+2", Map.of(), true), // new line
                 Arguments.of("(100/10) * (3+2)-", Map.of(), false) // operator as last symbol
         );
@@ -61,7 +59,7 @@ public class BasicTests {
     @ParameterizedTest
     @MethodSource("getReducerExpressions")
     public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult, boolean shouldSucceed) {
-        BigDecimal parsedResult = new BigDecimalExp(scale, roundingMode).parse(expression, params).eval();
+        BigDecimal parsedResult = new BigDecimalExp(scale, roundingMode).debug().parse(expression, params).eval();
         if(shouldSucceed) {
             assertEquals(0, parsedResult.compareTo(expectedResult));
         } else {
@@ -77,9 +75,9 @@ public class BasicTests {
 
         // tests two and three
         BigDecimal a2 = new BigDecimal("17000000000");
-        BigDecimal b2 = new BigDecimal("13.5");
+        BigDecimal b2 = new BigDecimal("1000000");
         BigDecimal c2 = new BigDecimal("18");
-        BigDecimal d2 = new BigDecimal("12");
+        BigDecimal d2 = new BigDecimal("5");
         BigDecimal e2 = new BigDecimal("13");
 
         // test four
@@ -90,6 +88,12 @@ public class BasicTests {
         BigDecimal e4 = new BigDecimal("13");
         return Stream.of(
                 Arguments.of(
+                        "10*2.5",
+                        Map.of(),
+                        BigDecimal.TEN.multiply(new BigDecimal("2.5")),
+                        true
+                ),
+                Arguments.of(
                         "a ^ 2 *((c/10)+b*c+a)",
                         Map.of("a", a1, "b", b1, "c", c1),
                         a1.pow(2).multiply(
@@ -98,7 +102,7 @@ public class BasicTests {
                         true
                 ),
                 Arguments.of(
-                        "(17000000000/13.5+1)*10+(18-10/12-13)",
+                        "(17000000000/1000000+1)*10+(18-10/5-13)",
                         Map.of(),
                         (a2.divide(b2, scale, roundingMode).add(BigDecimal.ONE)).multiply(BigDecimal.TEN).add(
                                 c2.subtract(BigDecimal.TEN.divide(d2, scale, roundingMode)).subtract(e2)
