@@ -107,8 +107,6 @@ public class BigDecimalExp {
     }
 
     private BigDecimal evaluate() throws ArithmeticException, NumberFormatException {
-
-
         /*
          * parse and evaluate, each opening parenthesis creates a recursive call of this method
          * to immediately reduce the contained sub-expression to a single BigDecimal
@@ -136,20 +134,16 @@ public class BigDecimalExp {
                 continue;
             }
 
-            // case where operator is the first sign encountered, which happens after a sub-expression has been parsed
+            // case where operator is the first sign encountered, which (legally) happens after a sub-expression has been parsed
             if(isOp && start == currInd) {
                 if(node == startNode){
                     throw new ArithmeticException(String.format("An expression must not start with an operator: %s", exp));
                 }
                 // do not silently accept duplicate operators
                 if(node.op != null) {
-                    throw new ArithmeticException(
-                            String.format(
-                                    "Value was already assigned an operator; check for duplicate operators (value: %s, op. 1: %s, op. 2: %s): %s",
-                                    node.val, node.op, c, exp
-                            )
-                    );
+                    throw new ArithmeticException(String.format("duplicate operators (op. 1: %s, op. 2: %s): %s", node.op, c, exp));
                 }
+
                 node.op = c;
             }else if(isOp || isEnd || isEndOfSubExpr) {
                 // get the term that ends here / at the last pos
@@ -162,38 +156,24 @@ public class BigDecimalExp {
                     throw new ArithmeticException(String.format("Empty sub-expressions are not allowed: %s", "()"));
                 }
 
-
-                // if symbol before this parenthesis was neither an operator, nor start of expression, nor another opening parenthesis
-                // this is an implicit multiplication
-                // terms from sub-expressions will be inside
-                // a node already, which is simply missing the operator
+                // implicit multiplication; terms from sub-expressions will be inside a node already, which is simply missing the operator
                 // else (i.e. the node before has an operator), fetch the ongoing term and add a multiplication node
                 if(currInd != 0 && !isOperator(chars[currInd-1]) && chars[currInd-1] != '(') {
                     if(node.op != null) {
                         BigDecimal val = getCurrentVal(chars, start, currInd, false, false);
                         node = node.appendAndReturn(new Node(val, MULTIPLY));
-                        nodesPerOp.get(MULTIPLY).add(node);
                     } else {
                         node.op = MULTIPLY;
-                        nodesPerOp.get(MULTIPLY).add(node);
                     }
+                    nodesPerOp.get(MULTIPLY).add(node);
                 }
 
-
-                // parse sub-expression
-                // but ignore empty parentheses: ()
-                int prevInd = currInd;
+                // parse sub-expression and add resulting value as a node
                 currInd++;
-                BigDecimal subExp = evaluate();
-                if(currInd - prevInd > 1) {
-                    // add sub expression and continue
-                    node = node.appendAndReturn(new Node(subExp, null));
-                }
+                node = node.appendAndReturn(new Node(evaluate(), null));
             }
 
-
             if(isOp) {
-                //add to occ. map
                 nodesPerOp.get(c).add(node);
             }
 

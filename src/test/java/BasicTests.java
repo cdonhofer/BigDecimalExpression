@@ -195,4 +195,39 @@ public class BasicTests {
         assertTrue(BigDecimalExp.containsIllegalChar("{0.014000} ^ 2 *((13.73/10)+2*13.73+0.014000)")); // curly braces
         assertTrue(BigDecimalExp.containsIllegalChar("{0.014000} ^ 2 *\\((13.73/10)+2*13.73+0.014000)")); // backslash
     }
+
+    @Test
+    public void testSpeedDifference() {
+        String expression = "a ^ 2 *((c/10)+b*c+a)";
+        BigDecimal a1 = new BigDecimal("0.014000");
+        BigDecimal b1 = new BigDecimal("2");
+        BigDecimal c1 = new BigDecimal("13.73");
+
+        int runs = 10_000_000;
+
+
+        Map<String, BigDecimal> params = Map.of("a", a1, "b", b1, "c", c1);
+        long expStart = System.nanoTime();
+        BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
+        for(int i = 0; i < runs; i++) {
+            BigDecimal result = bde.eval();
+        }
+        long expEnd = System.nanoTime();
+        long expDiff = expEnd - expStart;
+
+
+        long bdStart = System.nanoTime();
+        for(int i = 0; i < runs; i++) {
+            BigDecimal result = new BigDecimal("0.014000").pow(new BigDecimal("2").intValue()).multiply(
+                    new BigDecimal("13.73").divide(new BigDecimal("10"), scale, roundingMode).add(new BigDecimal("2").multiply(new BigDecimal("13.73"))).add(new BigDecimal("0.014000"))
+            );
+        }
+        long bdEnd = System.nanoTime();
+        long bdDiff = bdEnd - bdStart;
+
+        long percentage = (expDiff / bdDiff) * 10;
+        System.out.println("BigDecimal native time compared to BigDecimalExp in percent: "+percentage);
+        System.out.println("Native duration seconds: "+(bdDiff/1_000_000_000));
+        System.out.println("BigDecimalExp duration seconds: "+(expDiff/1_000_000_000));
+    }
 }
