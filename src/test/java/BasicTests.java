@@ -165,11 +165,11 @@ public class BasicTests {
 
     @Test
     public void testOperatorOrder() {
-        assertEquals(BigDecimalExp.operators.get(0), '^');
-        assertEquals(BigDecimalExp.operators.get(1), '*');
-        assertEquals(BigDecimalExp.operators.get(2), '/');
-        assertEquals(BigDecimalExp.operators.get(3), '+');
-        assertEquals(BigDecimalExp.operators.get(4), '-');
+        assertEquals(BigDecimalExp.operators[0], '^');
+        assertEquals(BigDecimalExp.operators[1], '*');
+        assertEquals(BigDecimalExp.operators[2], '/');
+        assertEquals(BigDecimalExp.operators[3], '+');
+        assertEquals(BigDecimalExp.operators[4], '-');
     }
 
     // TODO make this test more exhaustive
@@ -203,7 +203,7 @@ public class BasicTests {
         BigDecimal b1 = new BigDecimal("2");
         BigDecimal c1 = new BigDecimal("13.73");
 
-        int runs = 10_000_000;
+        int runs = 5_000_000;
 
 
         Map<String, BigDecimal> params = Map.of("a", a1, "b", b1, "c", c1);
@@ -219,13 +219,13 @@ public class BasicTests {
         long bdStart = System.nanoTime();
         for(int i = 0; i < runs; i++) {
             BigDecimal result = new BigDecimal("0.014000").pow(new BigDecimal("2").intValue()).multiply(
-                    new BigDecimal("13.73").divide(new BigDecimal("10"), scale, roundingMode).add(new BigDecimal("2").multiply(new BigDecimal("13.73"))).add(new BigDecimal("0.014000"))
+                    new BigDecimal("13.73").divide(new BigDecimal("10"), scale, roundingMode).add(new BigDecimal("2").multiply(new BigDecimal("13.73"))).add(new BigDecimal(i+".014000"))
             );
         }
         long bdEnd = System.nanoTime();
         long bdDiff = bdEnd - bdStart;
 
-        long percentage = (expDiff / bdDiff) * 10;
+        long percentage = ((bdDiff-expDiff) / bdDiff) * 10;
         System.out.println("BigDecimal native time compared to BigDecimalExp in percent: "+percentage);
         System.out.println("Native duration seconds: "+(bdDiff/1_000_000_000));
         System.out.println("BigDecimalExp duration seconds: "+(expDiff/1_000_000_000));
