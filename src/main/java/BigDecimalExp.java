@@ -22,17 +22,6 @@ public class BigDecimalExp {
     // list of operators for easier handling - the order is vital!
     static final Character[] operators = new Character[]{POW, MULTIPLY, DIVIDE, ADD, SUBTRACT};
 
-    // map operators to methods
-    // opting for speed here, and investing a few bytes for a larger array than necessary, so the lookup is really fast
-    static final BigDecimalOperation<BigDecimal, BigDecimal>[] opToMethod = new BigDecimalOperation[(int)POW+1];
-    static {
-        opToMethod[POW] = (a, b, scale, rMode) -> a.pow(b.intValue());
-        opToMethod[MULTIPLY] = (a, b, scale, rMode) -> a.multiply(b);
-        opToMethod[ADD] = (a, b, scale, rMode) -> a.add(b);
-        opToMethod[SUBTRACT] = (a, b, scale, rMode) -> a.subtract(b);
-        opToMethod[DIVIDE] = (a, b, scale, rMode) -> a.divide(b, scale, rMode);
-    }
-
     /*
     * instance fields
     */
@@ -117,10 +106,6 @@ public class BigDecimalExp {
         Node startNode = new Node(null, ' ');
         Node node = startNode;
 
-        // keep track of operators to allow for an efficient in-order application once parsing is done
-        // nodes per operator, using the same space for speed tradeoff as with the operation to symbol mapping
-//        List<Node>[] nodesPerOp = new List[(int)POW+1];
-//        for(char op : operators) nodesPerOp[getOpIndex(op)] = new ArrayList<>();
         OperationsLists nodesPerOp = new OperationsLists();
 
         // iterate over the characters of this (sub-)expression
@@ -178,7 +163,6 @@ public class BigDecimalExp {
             }
 
             if(isOp) {
-//                nodesPerOp.get(c).add(node);
                 switch (c) {
                     case POW -> nodesPerOp.pow.add(node);
                     case MULTIPLY -> nodesPerOp.multiply.add(node);
@@ -186,7 +170,6 @@ public class BigDecimalExp {
                     case ADD -> nodesPerOp.add.add(node);
                     case SUBTRACT -> nodesPerOp.subtract.add(node);
                 }
-//                nodesPerOp[getOpIndex(c)].add(node);
             }
 
             // end loop if we've reached the end of a sub-expression
@@ -208,6 +191,10 @@ public class BigDecimalExp {
         return result;
     }
 
+    private static int getOpIndex(char operator) {
+        return operator;
+    }
+
     private void printTerms(String msg, Node node) {
         System.out.println("----------------------------------");
         System.out.println(msg);
@@ -219,65 +206,65 @@ public class BigDecimalExp {
     }
 
     private BigDecimal applyOperations(Node startNode, OperationsLists nodesPerOp) {
-
         if(nodesPerOp.pow.size() > 0) {
-            BigDecimalOperation<BigDecimal, BigDecimal> operation = opToMethod[POW];
-            for(Node n : nodesPerOp.pow) {
-                applyOp(operation, n);
-            }
+            applyOp(getOpMethod(POW), nodesPerOp.pow);
         }
         if(nodesPerOp.multiply.size() > 0) {
-            BigDecimalOperation<BigDecimal, BigDecimal> operation = opToMethod[MULTIPLY];
-            for(Node n : nodesPerOp.multiply) {
-                applyOp(operation, n);
-            }
+            applyOp(getOpMethod(MULTIPLY), nodesPerOp.multiply);
         }
         if(nodesPerOp.divide.size() > 0) {
-            BigDecimalOperation<BigDecimal, BigDecimal> operation = opToMethod[DIVIDE];
-            for(Node n : nodesPerOp.divide) {
-                applyOp(operation, n);
-            }
+            applyOp(getOpMethod(DIVIDE), nodesPerOp.divide);
         }
         if(nodesPerOp.add.size() > 0) {
-            BigDecimalOperation<BigDecimal, BigDecimal> operation = opToMethod[ADD];
-            for(Node n : nodesPerOp.add) {
-                applyOp(operation, n);
-            }
+            applyOp(getOpMethod(ADD), nodesPerOp.add);
         }
         if(nodesPerOp.subtract.size() > 0) {
-            BigDecimalOperation<BigDecimal, BigDecimal> operation = opToMethod[SUBTRACT];
-            for(Node n : nodesPerOp.subtract) {
-                applyOp(operation, n);
-            }
+            applyOp(getOpMethod(SUBTRACT), nodesPerOp.subtract);
         }
 
         return startNode.next.val;
     }
 
-    private void applyOp(BigDecimalOperation<BigDecimal, BigDecimal> operation, Node n) {
-        // keep refs of adjacent nodes
-        Node left = n.prev;
-        Node secondOperand = n.next;
+    private void applyOp(BigDecimalOperation<BigDecimal, BigDecimal> operation, List<Node> opNodes) {
+        for(Node n : opNodes) {
+            // keep refs of adjacent nodes
+            Node left = n.prev;
+            Node secondOperand = n.next;
 
-        if(secondOperand == null) {
-            throw new ArithmeticException(String.format("Illegal Expression: missing right-hand operand in expression %s", exp));
+            if(secondOperand == null) {
+                throw new ArithmeticException(String.format("Illegal Expression: missing right-hand operand in expression %s", exp));
+            }
+
+            // write result to right operand, as it possible contains an operation with another node - left one is unlinked
+            secondOperand.val = operation.apply(n.val, secondOperand.val, scale, roundingMode);
+
+            // unlink processed node
+            secondOperand.prev = left;
+            left.next = secondOperand;
         }
+    }
 
-        // write result to right operand, as it possible contains an operation with another node - left one is unlinked
-        secondOperand.val = operation.apply(n.val, secondOperand.val, scale, roundingMode);
-
-        // unlink processed node
-        secondOperand.prev = left;
-        left.next = secondOperand;
+    private BigDecimalOperation<BigDecimal, BigDecimal> getOpMethod(char op) {
+        return switch (op) {
+            case POW -> (a, b, scale, rMode) -> a.pow(b.intValue());
+            case MULTIPLY -> (a, b, scale, rMode) -> a.multiply(b);
+            case ADD -> (a, b, scale, rMode) -> a.add(b);
+            case SUBTRACT -> (a, b, scale, rMode) -> a.subtract(b);
+            case DIVIDE -> (a, b, scale, rMode) -> a.divide(b, scale, rMode);
+            default -> throw new IllegalStateException("Unexpected value: " + op);
+        };
     }
 
     private BigDecimal getCurrentVal(char[] chars, int start, int i, boolean isEnd, boolean isEndOfSubExpr) {
         int expLastChar = isEnd && !isEndOfSubExpr ? i : i - 1;
-        String currentTerm = new String(Arrays.copyOfRange(chars, start, expLastChar + 1)).trim();
+        int length = expLastChar + 1 - start;
+        char[] newChars = new char[length];
+        System.arraycopy(chars,start,newChars, 0, length);
+        String currentTerm = new String(newChars);
         // check if term is a variable and if so, get it; else, treat term as value and create BigDecimal
         return Optional
                 .ofNullable(vars.get(currentTerm))
-                .orElseGet(() -> new BigDecimal(currentTerm));
+                .orElseGet(() -> new BigDecimal(newChars));
     }
 
     public static List<String> extractVariables(String exp) {
@@ -326,11 +313,12 @@ public class BigDecimalExp {
             return n;
         }
     }
+
     private static class OperationsLists {
-        List<Node> pow = new ArrayList<>();
-        List<Node> multiply = new ArrayList<>();
-        List<Node> divide = new ArrayList<>();
-        List<Node> subtract = new ArrayList<>();
-        List<Node> add = new ArrayList<>();
+        List<Node> pow = new LinkedList<>();
+        List<Node> multiply = new LinkedList<>();
+        List<Node> divide = new LinkedList<>();
+        List<Node> subtract = new LinkedList<>();
+        List<Node> add = new LinkedList<>();
     }
 }

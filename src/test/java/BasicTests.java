@@ -198,7 +198,7 @@ public class BasicTests {
 
     @Test
     public void testSpeedDifference() {
-        String expression = "a ^ 2 *((c/10)+b*c+a)";
+        String expression = "a ^ b *((c/d)+b*c+a)";
         BigDecimal a1 = new BigDecimal("0.014000");
         BigDecimal b1 = new BigDecimal("2");
         BigDecimal c1 = new BigDecimal("13.73");
@@ -206,7 +206,7 @@ public class BasicTests {
         int runs = 5_000_000;
 
 
-        Map<String, BigDecimal> params = Map.of("a", a1, "b", b1, "c", c1);
+        Map<String, BigDecimal> params = Map.of("a", a1, "b", b1, "c", c1, "d", BigDecimal.TEN);
         long expStart = System.nanoTime();
         BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
         for(int i = 0; i < runs; i++) {
@@ -225,9 +225,9 @@ public class BasicTests {
         long bdEnd = System.nanoTime();
         long bdDiff = bdEnd - bdStart;
 
-        long percentage = ((bdDiff-expDiff) / bdDiff) * 10;
+        double percentage = ((double)(bdDiff/expDiff)) * 10.0;
         System.out.println("BigDecimal native time compared to BigDecimalExp in percent: "+percentage);
-        System.out.println("Native duration seconds: "+(bdDiff/1_000_000_000));
-        System.out.println("BigDecimalExp duration seconds: "+(expDiff/1_000_000_000));
+        System.out.println("Native duration seconds: "+String.format(java.util.Locale.US,"%.2f", (bdDiff/1_000_000_000.0)));
+        System.out.println("BigDecimalExp duration seconds: "+String.format(java.util.Locale.US,"%.2f", (expDiff/1_000_000_000.0)));
     }
 }
