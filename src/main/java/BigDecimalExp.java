@@ -154,7 +154,7 @@ public class BigDecimalExp {
                     } else {
                         node.op = MULTIPLY;
                     }
-                    nodesPerOp.multiply.add(node);
+                    nodesPerOp.add(node);
                 }
 
                 // parse sub-expression and add resulting value as a node
@@ -163,13 +163,7 @@ public class BigDecimalExp {
             }
 
             if(isOp) {
-                switch (c) {
-                    case POW -> nodesPerOp.pow.add(node);
-                    case MULTIPLY -> nodesPerOp.multiply.add(node);
-                    case DIVIDE -> nodesPerOp.divide.add(node);
-                    case ADD -> nodesPerOp.add.add(node);
-                    case SUBTRACT -> nodesPerOp.subtract.add(node);
-                }
+                nodesPerOp.add(node);
             }
 
             // end loop if we've reached the end of a sub-expression
@@ -320,5 +314,19 @@ public class BigDecimalExp {
         List<Node> divide = new LinkedList<>();
         List<Node> subtract = new LinkedList<>();
         List<Node> add = new LinkedList<>();
+
+        public void add(Node node) {
+            if(node == null) return;
+
+            List<Node> opList = switch (node.op) {
+                case POW -> pow;
+                case MULTIPLY -> multiply;
+                case DIVIDE -> divide;
+                case SUBTRACT -> subtract;
+                case ADD -> add;
+                default -> throw new IllegalStateException("Unexpected value: " + node.op);
+            };
+            opList.add(node);
+        }
     }
 }
