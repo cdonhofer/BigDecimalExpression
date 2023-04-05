@@ -60,8 +60,8 @@ public class BigDecimalExp {
     }
 
     public BigDecimalExp parse(String exp, Map<String, BigDecimal> vars) throws BigDecimalExpException {
-        // remove whitespace from expression
-        this.exp = exp.strip().replaceAll("\\s", "");
+        // remove spaces from expression
+        this.exp = exp.replace(" ", "");
         this.chars = this.exp.toCharArray();
         this.vars = vars;
 
@@ -116,9 +116,19 @@ public class BigDecimalExp {
             boolean isEnd = currInd == chars.length-1;
             boolean isStartOfSubExpr = c == '(';
             boolean isEndOfSubExpr = c == ')';
+            boolean isNegativeValueStart = start == currInd && c == '-';
+
+
+            // check for implicit multiplication with a previous sub-expr: (...)2
+            if(!isOp && !isStartOfSubExpr && node != startNode && node.op == null) {
+                node.op = MULTIPLY;
+                nodesPerOp.add(node);
+            }
 
             // within a term: continue
-            if(!isEnd && !isEndOfSubExpr && !isStartOfSubExpr && !isOp) {
+            if((!isEnd && !isEndOfSubExpr && !isStartOfSubExpr && !isOp)
+                || isNegativeValueStart
+            ) {
                 currInd++;
                 continue;
             }

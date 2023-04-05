@@ -46,8 +46,8 @@ public class BasicTests {
                 Arguments.of("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000", Map.of(), false), // missing parenthesis
                 Arguments.of("0.014000 ^ 2 ((13.73/10)+2*13.73+0.014000)", Map.of(), true), // implicit multiplication
                 Arguments.of("(100/10) * (3+2)", Map.of(), true),
-                Arguments.of("(100/10) * (3+2)\n+2", Map.of(), true), // new line
-                Arguments.of("(100/10) * (3+2)-", Map.of(), false) // operator as last symbol
+                Arguments.of("(100/10) * (3+2)\n+2", Map.of(), false), // new line
+                Arguments.of("(100/10) * (3+2)-", Map.of(), true) // operator as last symbol - makes no sense, but will work
         );
     }
 
@@ -146,6 +146,18 @@ public class BasicTests {
                         new BigDecimal("21"),
                         true
                 ),
+                Arguments.of(
+                        "(5-2)2",
+                        Map.of(),
+                        new BigDecimal("6"),
+                        true
+                ),
+                Arguments.of(
+                        "(5-2)-2",
+                        Map.of(),
+                        new BigDecimal("-6"),
+                        true
+                ),
                 // implicit multiplication with just one set of parentheses
                 Arguments.of(
                         "3 (5+2)",
@@ -158,6 +170,25 @@ public class BasicTests {
                         "3+(5+2)",
                         Map.of(),
                         new BigDecimal("10"),
+                        true
+                ),
+                // negative values
+                Arguments.of(
+                        "-3+(5+2)",
+                        Map.of(),
+                        new BigDecimal("4"),
+                        true
+                ),
+                Arguments.of(
+                        "3+(-5)+2",
+                        Map.of(),
+                        new BigDecimal("0"),
+                        true
+                ),
+                Arguments.of(
+                        "3(-5)",
+                        Map.of(),
+                        new BigDecimal("-15"),
                         true
                 )
         );
@@ -198,7 +229,7 @@ public class BasicTests {
 
     @Test
     public void testSpeedDifference() {
-        String expression = "a ^ b *((c/d)+b*c+a)";
+        String expression = "a^b*((c/d)+b*c+a)";
         BigDecimal a1 = new BigDecimal("0.014000");
         BigDecimal b1 = new BigDecimal("2");
         BigDecimal c1 = new BigDecimal("13.73");
@@ -208,9 +239,9 @@ public class BasicTests {
 
         Map<String, BigDecimal> params = Map.of("a", a1, "b", b1, "c", c1, "d", BigDecimal.TEN);
         long expStart = System.nanoTime();
-        BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
+        BigDecimalExp bde = new BigDecimalExp(scale, roundingMode);
         for(int i = 0; i < runs; i++) {
-            BigDecimal result = bde.eval();
+            BigDecimal result = bde.parse(expression, params).eval();
         }
         long expEnd = System.nanoTime();
         long expDiff = expEnd - expStart;
