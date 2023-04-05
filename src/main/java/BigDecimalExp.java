@@ -1,6 +1,9 @@
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -210,27 +213,29 @@ public class BigDecimalExp {
     }
 
     private BigDecimal applyOperations(Node startNode, OperationsLists nodesPerOp) {
-        if(nodesPerOp.pow.size() > 0) {
-            applyOp(getOpMethod(POW), nodesPerOp.pow);
+        if(!nodesPerOp.pow.isEmpty()) {
+            applyOp(getOpMethod(POW), nodesPerOp.pow.startNode);
         }
-        if(nodesPerOp.multiply.size() > 0) {
-            applyOp(getOpMethod(MULTIPLY), nodesPerOp.multiply);
+        if(!nodesPerOp.multiply.isEmpty()) {
+            applyOp(getOpMethod(MULTIPLY), nodesPerOp.multiply.startNode);
         }
-        if(nodesPerOp.divide.size() > 0) {
-            applyOp(getOpMethod(DIVIDE), nodesPerOp.divide);
+        if(!nodesPerOp.divide.isEmpty()) {
+            applyOp(getOpMethod(DIVIDE), nodesPerOp.divide.startNode);
         }
-        if(nodesPerOp.add.size() > 0) {
-            applyOp(getOpMethod(ADD), nodesPerOp.add);
+        if(!nodesPerOp.add.isEmpty()) {
+            applyOp(getOpMethod(ADD), nodesPerOp.add.startNode);
         }
-        if(nodesPerOp.subtract.size() > 0) {
-            applyOp(getOpMethod(SUBTRACT), nodesPerOp.subtract);
+        if(!nodesPerOp.subtract.isEmpty()) {
+            applyOp(getOpMethod(SUBTRACT), nodesPerOp.subtract.startNode);
         }
 
         return startNode.next.val;
     }
 
-    private void applyOp(BigDecimalOperation<BigDecimal, BigDecimal> operation, List<Node> opNodes) {
-        for(Node n : opNodes) {
+    private void applyOp(BigDecimalOperation<BigDecimal, BigDecimal> operation, ListNode opNode) {
+        while(opNode != null) {
+            Node n = opNode.node;
+
             // keep refs of adjacent nodes
             Node left = n.prev;
             Node secondOperand = n.next;
@@ -245,6 +250,8 @@ public class BigDecimalExp {
             // unlink processed node
             secondOperand.prev = left;
             left.next = secondOperand;
+
+            opNode = opNode.next;
         }
     }
 
@@ -318,17 +325,44 @@ public class BigDecimalExp {
         }
     }
 
+    private static class ListNode {
+        Node node;
+        ListNode next;
+        public ListNode(Node node) {
+            this.node = node;
+        }
+    }
+
+    private static class NodeList {
+        ListNode startNode;
+        ListNode node;
+
+        public void add(Node n) {
+            ListNode newNode = new ListNode(n);
+            if(startNode == null) {
+                startNode = newNode;
+            } else {
+                node.next = newNode;
+            }
+            node = newNode;
+        }
+
+        public boolean isEmpty() {
+            return startNode == null;
+        }
+    }
+
     private static class OperationsLists {
-        List<Node> pow = new LinkedList<>();
-        List<Node> multiply = new LinkedList<>();
-        List<Node> divide = new LinkedList<>();
-        List<Node> subtract = new LinkedList<>();
-        List<Node> add = new LinkedList<>();
+        NodeList pow = new NodeList();
+        NodeList multiply = new NodeList();
+        NodeList divide = new NodeList();
+        NodeList subtract = new NodeList();
+        NodeList add = new NodeList();
 
         public void add(Node node) {
             if(node == null) return;
 
-            List<Node> opList = switch (node.op) {
+            NodeList opList = switch (node.op) {
                 case POW -> pow;
                 case MULTIPLY -> multiply;
                 case DIVIDE -> divide;
