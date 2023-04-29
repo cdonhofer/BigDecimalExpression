@@ -103,7 +103,6 @@ try {
 ### DIVISION
 * character: /
 * usage: a / b
-* automatically uses the intValue of b, when b is a BigDecimal
 ### ADDITION
 * character: +
 * usage: a + b
@@ -113,6 +112,7 @@ try {
 
 
 ## Expressions
-Expressions follow the general mathematical rules. Allowed symbols are:
+Expressions follow the usual mathematical rules(e.g. left-to-right evaluation). Allowed symbols are:
 * variables (following the java rules for valid names): "[a-zA-Z_$][a-zA-Z_$0-9]*"
 * operators, numbers, decimal point(.) and spaces: "[^a-zA-Z0-9.\\-+*/^_ ()]"
+* formatting underscores are currently not supported (e.g. "a * 2_500_000")
