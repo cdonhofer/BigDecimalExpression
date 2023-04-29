@@ -232,7 +232,7 @@ public class BasicTests {
     @MethodSource("getSpeedTestArgs")
     public void testSpeedDifference(String expression, Map<String, BigDecimal> params, Supplier<BigDecimal> nativeBD, BigDecimal expectedResult) {
 
-        int runs = 1_000_000;
+        int runs = 1_500_000;
 
         long expStart = System.nanoTime();
         BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);

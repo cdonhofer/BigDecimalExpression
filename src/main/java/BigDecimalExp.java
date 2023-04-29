@@ -1,9 +1,6 @@
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -60,19 +57,28 @@ public class BigDecimalExp {
             varsMap.put(var.getKey(), var.getValue());
         }
 
-        return parse(exp, varsMap);
+        return parse(exp, varsMap, false);
     }
 
     public BigDecimalExp parse(String exp) throws BigDecimalExpException {
         Map<String, BigDecimal> varsMap = new HashMap<>();
-        return parse(exp, varsMap);
+        return parse(exp, varsMap, false);
     }
 
     public BigDecimalExp parse(String exp, Map<String, BigDecimal> vars) throws BigDecimalExpException {
+        return parse(exp, vars, true);
+    }
+
+    private BigDecimalExp parse(String exp, Map<String, BigDecimal> vars, boolean createMutableCopy) throws BigDecimalExpException {
+
         // remove spaces from expression
         this.exp = exp.replace(" ", "");
         this.chars = this.exp.toCharArray();
         this.vars = vars;
+
+        if(createMutableCopy) {
+            this.vars = new HashMap<>(vars);
+        }
 
         return this;
     }
@@ -282,7 +288,12 @@ public class BigDecimalExp {
         // check if term is a variable and if so, get it; else, treat term as value and create BigDecimal
         return Optional
                 .ofNullable(vars.get(currentTerm))
-                .orElseGet(() -> new BigDecimal(newChars));
+                .orElseGet(() -> {
+                    // parse value and save to map to avoid parsing the same value multiple times
+                    BigDecimal newVal = new BigDecimal(newChars);
+                    vars.put(currentTerm, newVal);
+                    return newVal;
+                });
     }
 
 
