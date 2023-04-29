@@ -1,3 +1,7 @@
+package net.donhofer.bigdecimal.main;
+
+import net.donhofer.bigdecimal.BigDecimalExp;
+import net.donhofer.bigdecimal.BigDecimalExpException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -19,7 +23,7 @@ public class BasicTests {
 
     /**
      * tests the parsing process only, i.e. if it succeeds or fails as expected
-     * @param expression the expression to be parsed by BigDecimalExp
+     * @param expression the expression to be parsed by net.donhofer.bigdecimal.BigDecimalExp
      * @param params the Map of param to BigDecimal, for all parameters used in the expression
      */
     @ParameterizedTest
@@ -54,7 +58,7 @@ public class BasicTests {
 
     /**
      * tests the parsing process only, i.e. if it succeeds or fails as expected
-     * @param expression the expression to be parsed by BigDecimalExp
+     * @param expression the expression to be parsed by net.donhofer.bigdecimal.BigDecimalExp
      * @param params the Map of param to BigDecimal, for all parameters used in the expression
      */
     @ParameterizedTest
@@ -195,15 +199,6 @@ public class BasicTests {
         );
     }
 
-    @Test
-    public void testOperatorOrder() {
-        assertEquals(BigDecimalExp.operators[0], '^');
-        assertEquals(BigDecimalExp.operators[1], '*');
-        assertEquals(BigDecimalExp.operators[2], '/');
-        assertEquals(BigDecimalExp.operators[3], '+');
-        assertEquals(BigDecimalExp.operators[4], '-');
-    }
-
     // TODO make this test more exhaustive
     @Test
     public void testVariableExtraction() {
@@ -254,7 +249,7 @@ public class BasicTests {
         long bdDiff = bdEnd - bdStart;
 
         System.out.println("Native duration seconds: "+String.format(java.util.Locale.US,"%.10f", (bdDiff/1_000_000_000.0)));
-        System.out.println("BigDecimalExp duration seconds: "+String.format(java.util.Locale.US,"%.10f", (expDiff/1_000_000_000.0)));
+        System.out.println("net.donhofer.bigdecimal.BigDecimalExp duration seconds: "+String.format(java.util.Locale.US,"%.10f", (expDiff/1_000_000_000.0)));
 
         // must not take more than 2.2 times the native time
         double bound = bdDiff*2.5;

@@ -1,3 +1,5 @@
+package net.donhofer.bigdecimal;
+
 import java.math.RoundingMode;
 
 @FunctionalInterface
