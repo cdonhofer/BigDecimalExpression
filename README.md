@@ -16,7 +16,7 @@ Allows you to write your BigDecimal code like this
         "e", e, "f", f, "g", g, "h", h
     );
     
-    BigDecimal result = new net.donhofer.bigdecimal.BigDecimalExp(scale, roundingMode)
+    BigDecimal result = new BigDecimalExp(scale, roundingMode)
         .parse("(a/b+f)*g+(c-g/d-e)/h", params)
         .eval();
 ```
@@ -42,7 +42,7 @@ BigDecimal result = new BigDecimal("17000000000")
 ## Usage Examples
 ```Java
     // create reusable expression parser
-    net.donhofer.bigdecimal.BigDecimalExp bde = new net.donhofer.bigdecimal.BigDecimalExp(scale, roundingMode);
+    net.donhofer.bigdecimal.BigDecimalExp bde = new BigDecimalExp(scale, roundingMode);
     
     // call using a map
     BigDecimal result = bde.parse(
@@ -69,7 +69,7 @@ net.donhofer.bigdecimal.BigDecimalExp, like BigDecimal, throws only unchecked ex
 
 ```Java
 // use the state-testing method
-net.donhofer.bigdecimal.BigDecimalExp bde = new net.donhofer.bigdecimal.BigDecimalExp(scale, roundingMode).parse(expression, params);
+net.donhofer.bigdecimal.BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
 if(!bde.isValid()){
     // ...
 }
@@ -83,7 +83,7 @@ etc.; See the test cases or the class itself for more possibilities.
 // catch possible exceptions
 try {
     result = bde.eval();
-} catch (net.donhofer.bigdecimal.BigDecimalExpException bde) {
+} catch (BigDecimalExpException bde) {
     // ...
 }
 ```
