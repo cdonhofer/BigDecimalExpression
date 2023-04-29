@@ -42,7 +42,7 @@ BigDecimal result = new BigDecimal("17000000000")
 ## Usage Examples
 ```Java
     // create reusable expression parser
-    net.donhofer.bigdecimal.BigDecimalExp bde = new BigDecimalExp(scale, roundingMode);
+    BigDecimalExp bde = new BigDecimalExp(scale, roundingMode);
     
     // call using a map
     BigDecimal result = bde.parse(
@@ -64,12 +64,12 @@ BigDecimal result = new BigDecimal("17000000000")
 
 ## Validation and Error Handling
 
-net.donhofer.bigdecimal.BigDecimalExp, like BigDecimal, throws only unchecked exceptions. In situations that allow you
+BigDecimalExp, like BigDecimal, throws only unchecked exceptions. In situations that allow you
  to recover from errors, you can use the following mechanisms.
 
 ```Java
 // use the state-testing method
-net.donhofer.bigdecimal.BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
+BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
 if(!bde.isValid()){
     // ...
 }
