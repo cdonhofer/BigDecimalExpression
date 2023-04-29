@@ -117,7 +117,7 @@ Expressions follow the usual mathematical rules(e.g. left-to-right evaluation). 
 * formatting underscores are currently not supported (e.g. "a * 2_500_000")
 
 ## Speed
-Currently, the test suite validates that the runtime of BDE expressions is no more than 2.5 times 
+Currently, the test suite validates the runtime of BDE expressions to be no more than 2.5 times 
 that of native BigDecimal. Usually, they are a lot closer, i.e. only 1.6 times the native implementation's duration, which
 is quite a bit faster than other, even commercial, expression parsers.
 
