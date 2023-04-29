@@ -23,7 +23,7 @@ public class BasicTests {
 
     /**
      * tests the parsing process only, i.e. if it succeeds or fails as expected
-     * @param expression the expression to be parsed by net.donhofer.bigdecimal.BigDecimalExp
+     * @param expression the expression to be parsed by BigDecimalExp
      * @param params the Map of param to BigDecimal, for all parameters used in the expression
      */
     @ParameterizedTest
@@ -58,7 +58,7 @@ public class BasicTests {
 
     /**
      * tests the parsing process only, i.e. if it succeeds or fails as expected
-     * @param expression the expression to be parsed by net.donhofer.bigdecimal.BigDecimalExp
+     * @param expression the expression to be parsed by BigDecimalExp
      * @param params the Map of param to BigDecimal, for all parameters used in the expression
      */
     @ParameterizedTest
@@ -249,7 +249,7 @@ public class BasicTests {
         long bdDiff = bdEnd - bdStart;
 
         System.out.println("Native duration seconds: "+String.format(java.util.Locale.US,"%.10f", (bdDiff/1_000_000_000.0)));
-        System.out.println("net.donhofer.bigdecimal.BigDecimalExp duration seconds: "+String.format(java.util.Locale.US,"%.10f", (expDiff/1_000_000_000.0)));
+        System.out.println("BigDecimalExp duration seconds: "+String.format(java.util.Locale.US,"%.10f", (expDiff/1_000_000_000.0)));
 
         // must not take more than 2.2 times the native time
         double bound = bdDiff*2.5;
