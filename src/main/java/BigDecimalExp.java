@@ -20,14 +20,14 @@ public class BigDecimalExp {
     public static final char POW = '^';
 
     public static final String VALID_VAR_REGEX = "[a-zA-Z_$][a-zA-Z_$0-9]*";
-    public static final String ILLEGAL_CHARS_REGEX = "[^a-zA-Z0-9.\\-+*/^_\\s()]";
+    public static final String ILLEGAL_CHARS_REGEX = "[^a-zA-Z0-9.\\-+*/^_ ()]";
 
     // list of operators for easier handling - the order is vital!
     static final Character[] operators = new Character[]{POW, MULTIPLY, DIVIDE, ADD, SUBTRACT};
 
     /*
-    * instance fields
-    */
+     * instance fields
+     */
     RoundingMode roundingMode;
     int scale;
     Map<String, BigDecimal> vars = new HashMap<>();
@@ -53,7 +53,8 @@ public class BigDecimalExp {
         return this;
     }
 
-    public BigDecimalExp parse(String exp, Map.Entry<String, BigDecimal>... vars) throws BigDecimalExpException {
+    @SafeVarargs
+    public final BigDecimalExp parse(String exp, Map.Entry<String, BigDecimal>... vars) throws BigDecimalExpException {
         Map<String, BigDecimal> varsMap = new HashMap<>();
         for(Map.Entry<String, BigDecimal> var : vars) {
             varsMap.put(var.getKey(), var.getValue());
@@ -113,6 +114,7 @@ public class BigDecimalExp {
 
         // iterate over the characters of this (sub-)expression
         int start = currInd;
+        int expStart = Math.max(0, currInd-1);
         while(currInd < chars.length) {
             char c = chars[currInd];
             boolean isOp = isOperator(c);
@@ -130,7 +132,7 @@ public class BigDecimalExp {
 
             // within a term: continue
             if((!isEnd && !isEndOfSubExpr && !isStartOfSubExpr && !isOp)
-                || isNegativeValueStart
+                    || isNegativeValueStart
             ) {
                 currInd++;
                 continue;
@@ -139,11 +141,11 @@ public class BigDecimalExp {
             // case where operator is the first sign encountered, which (legally) happens after a sub-expression has been parsed
             if(isOp && start == currInd) {
                 if(node == startNode){
-                    throw new ArithmeticException(String.format("An expression must not start with an operator: %s", exp));
+                    throw new ArithmeticException(String.format("An expression must not start with an operator: %s", getCurrentExpression(expStart)));
                 }
                 // do not silently accept duplicate operators
                 if(node.op != null) {
-                    throw new ArithmeticException(String.format("duplicate operators (op. 1: %s, op. 2: %s): %s", node.op, c, exp));
+                    throw new ArithmeticException(String.format("duplicate operators (op. 1: %s, op. 2: %s): %s", node.op, c, getCurrentExpression(expStart)));
                 }
 
                 node.op = c;
@@ -155,7 +157,7 @@ public class BigDecimalExp {
 
                 // handle empty parentheses sub-expression: ()
                 if(chars[currInd+1] == ')') {
-                    throw new ArithmeticException(String.format("Empty sub-expressions are not allowed: %s", "()"));
+                    throw new ArithmeticException(String.format("Empty sub-expressions are not allowed: %s; expression: %s", "()", getCurrentExpression(expStart)));
                 }
 
                 // implicit multiplication; terms from sub-expressions will be inside a node already, which is simply missing the operator
@@ -192,7 +194,6 @@ public class BigDecimalExp {
         // apply operations
         if(debug) printTerms("found these terms: ", startNode.next);
         BigDecimal result = applyOperations(startNode, nodesPerOp);
-//        BigDecimal result = BigDecimal.TEN;
         if(debug) printTerms("final terms: ", startNode.next);
 
         return result;
@@ -247,6 +248,7 @@ public class BigDecimalExp {
             // write result to right operand, as it possible contains an operation with another node - left one is unlinked
             secondOperand.val = operation.apply(n.val, secondOperand.val, scale, roundingMode);
 
+
             // unlink processed node
             secondOperand.prev = left;
             left.next = secondOperand;
@@ -261,7 +263,7 @@ public class BigDecimalExp {
             case MULTIPLY -> (a, b, scale, rMode) -> a.multiply(b);
             case ADD -> (a, b, scale, rMode) -> a.add(b);
             case SUBTRACT -> (a, b, scale, rMode) -> a.subtract(b);
-            case DIVIDE -> (a, b, scale, rMode) -> a.divide(b, scale, rMode);
+            case DIVIDE -> BigDecimal::divide;
             default -> throw new IllegalStateException("Unexpected value: " + op);
         };
     }
@@ -270,7 +272,7 @@ public class BigDecimalExp {
         int expLastChar = isEnd && !isEndOfSubExpr ? i : i - 1;
         int length = expLastChar + 1 - start;
         char[] newChars = new char[length];
-        System.arraycopy(chars,start,newChars, 0, length);
+        System.arraycopy(chars, start, newChars, 0, length);
         String currentTerm = new String(newChars);
         // check if term is a variable and if so, get it; else, treat term as value and create BigDecimal
         return Optional
@@ -278,8 +280,32 @@ public class BigDecimalExp {
                 .orElseGet(() -> new BigDecimal(newChars));
     }
 
+
+    /**
+     * returns the current (sub-)expression
+     * when in a sub expression (start > 0) return that part only; else, return the whole expression
+     * @param start start of the expression
+     * @return the current expression
+     */
+    private String getCurrentExpression(int start) {
+        int opened = 0;
+        int length = 0;
+        boolean isMainExp = start == 0;
+        System.out.println("current start "+start);
+        int pos;
+        do {
+            pos = start + length;
+            if(chars[pos] == ')') opened--;
+            if(chars[pos] == '(') opened++;
+            length++;
+        } while ((isMainExp || opened > 0) && pos < chars.length-1);
+        char[] currentExp = new char[length];
+        System.arraycopy(chars, start, currentExp, 0, length);
+        return new String(currentExp);
+    }
+
     public static List<String> extractVariables(String exp) {
-         return Pattern.compile(VALID_VAR_REGEX)
+        return Pattern.compile(VALID_VAR_REGEX)
                 .matcher(exp)
                 .results()
                 .map(MatchResult::group)
