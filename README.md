@@ -110,9 +110,15 @@ try {
 * character: -
 * usage: a - b
 
-
 ## Expressions
 Expressions follow the usual mathematical rules(e.g. left-to-right evaluation). Allowed symbols are:
 * variables (following the java rules for valid names): "[a-zA-Z_$][a-zA-Z_$0-9]*"
 * operators, numbers, decimal point(.) and spaces: "[^a-zA-Z0-9.\\-+*/^_ ()]"
 * formatting underscores are currently not supported (e.g. "a * 2_500_000")
+
+## Speed
+Currently, the test suite validates that the runtime of BDE expressions is no more than 2.5 times 
+that of native BigDecimal. Usually, they are a lot closer, i.e. only 1.6 times the native implementation's duration, which
+is quite a bit faster than other, even commercial, expression parsers.
+
+Still, improving the speed of BigDecimalExpression is one of the main goals for future versions.
