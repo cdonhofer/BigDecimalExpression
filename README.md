@@ -2,7 +2,7 @@
 Simple, readable and reasonably fast BigDecimal usage in Java
 
 Allows you to write your BigDecimal code like this
-```
+```Java
     BigDecimal a = new BigDecimal("17000000000");
     BigDecimal b = new BigDecimal("1000000");
     BigDecimal c = new BigDecimal("18");
@@ -23,7 +23,7 @@ Allows you to write your BigDecimal code like this
 
 
 ... instead of this
-```
+```Java
 BigDecimal result = new BigDecimal("17000000000")
     .divide(new BigDecimal("1000000"), scale, roundingMode)
     .add(new BigDecimal("1"))
@@ -40,7 +40,7 @@ BigDecimal result = new BigDecimal("17000000000")
 ```
 
 ## Usage Examples
-```
+```Java
     // create reusable expression parser
     BigDecimalExp bde = new BigDecimalExp(scale, roundingMode);
     
@@ -67,7 +67,7 @@ BigDecimal result = new BigDecimal("17000000000")
 BigDecimalExp, like BigDecimal, throws only unchecked exceptions. In situations that allow you
  to recover from errors, you can use the following mechanisms.
 
-```
+```Java
 // use the state-testing method
 BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
 if(!bde.isValid()){
