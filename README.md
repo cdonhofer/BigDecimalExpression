@@ -127,3 +127,4 @@ Still, improving the speed of BigDecimalExpression is one of the main goals for 
 * improve runtime
 * create bug tracker
 * publish to repos
+* debug mode and tests: use logger instead of sysout

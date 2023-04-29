@@ -1,3 +1,5 @@
+package net.donhofer.bigdecimal;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -18,9 +20,6 @@ public class BigDecimalExp {
 
     public static final String VALID_VAR_REGEX = "[a-zA-Z_$][a-zA-Z_$0-9]*";
     public static final String ILLEGAL_CHARS_REGEX = "[^a-zA-Z0-9.\\-+*/^_ ()]";
-
-    // list of operators for easier handling - the order is vital!
-    static final Character[] operators = new Character[]{POW, MULTIPLY, DIVIDE, ADD, SUBTRACT};
 
     /*
      * instance fields
@@ -50,6 +49,13 @@ public class BigDecimalExp {
         return this;
     }
 
+    /**
+     * set the expression and pass variables in contains as BigDecimals
+     * @param exp the mathematical expression
+     * @param vars the variables used in the expression
+     * @return the BigDecimalExp instance
+     * @throws BigDecimalExpException an unchecked exception that contains error details
+     */
     @SafeVarargs
     public final BigDecimalExp parse(String exp, Map.Entry<String, BigDecimal>... vars) throws BigDecimalExpException {
         Map<String, BigDecimal> varsMap = new HashMap<>();
@@ -60,17 +66,29 @@ public class BigDecimalExp {
         return parse(exp, varsMap, false);
     }
 
+    /**
+     * set the expression
+     * @param exp the mathematical expression
+     * @return the BigDecimalExp instance
+     * @throws BigDecimalExpException an unchecked exception that contains error details
+     */
     public BigDecimalExp parse(String exp) throws BigDecimalExpException {
         Map<String, BigDecimal> varsMap = new HashMap<>();
         return parse(exp, varsMap, false);
     }
 
+    /**
+     * set the expression and pass variables in contains as BigDecimals
+     * @param exp the mathematical expression
+     * @param vars the variables used in the expression
+     * @return the BigDecimalExp instance
+     * @throws BigDecimalExpException an unchecked exception that contains error details
+     */
     public BigDecimalExp parse(String exp, Map<String, BigDecimal> vars) throws BigDecimalExpException {
         return parse(exp, vars, true);
     }
 
     private BigDecimalExp parse(String exp, Map<String, BigDecimal> vars, boolean createMutableCopy) throws BigDecimalExpException {
-
         // remove spaces from expression
         this.exp = exp.replace(" ", "");
         this.chars = this.exp.toCharArray();
@@ -99,6 +117,11 @@ public class BigDecimalExp {
         return charsAreLegal && allVarsProvided && validateParentheses(exp);
     }
 
+    /**
+     * evaluate the expression with the current state
+     * @return a BigDecimal representing the result
+     * @throws BigDecimalExpException an unchecked exception that contains error details
+     */
     public BigDecimal eval() throws BigDecimalExpException {
         // the index is maintained globally, due to the recursive nature of the evaluation
         currInd = 0;
@@ -117,6 +140,7 @@ public class BigDecimalExp {
          * parse and evaluate, each opening parenthesis creates a recursive call of this method
          * to immediately reduce the contained sub-expression to a single BigDecimal
          */
+
         // collect operations as a linked list with a dummy start node
         Node startNode = new Node(null, ' ');
         Node node = startNode;

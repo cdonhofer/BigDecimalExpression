@@ -1,3 +1,7 @@
+package net.donhofer.bigdecimal.main;
+
+import net.donhofer.bigdecimal.BigDecimalExp;
+import net.donhofer.bigdecimal.BigDecimalExpException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -193,15 +197,6 @@ public class BasicTests {
                         true
                 )
         );
-    }
-
-    @Test
-    public void testOperatorOrder() {
-        assertEquals(BigDecimalExp.operators[0], '^');
-        assertEquals(BigDecimalExp.operators[1], '*');
-        assertEquals(BigDecimalExp.operators[2], '/');
-        assertEquals(BigDecimalExp.operators[3], '+');
-        assertEquals(BigDecimalExp.operators[4], '-');
     }
 
     // TODO make this test more exhaustive
