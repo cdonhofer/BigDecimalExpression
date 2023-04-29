@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,8 +47,8 @@ public class BasicTests {
                 Arguments.of("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000", Map.of(), false), // missing parenthesis
                 Arguments.of("0.014000 ^ 2 ((13.73/10)+2*13.73+0.014000)", Map.of(), true), // implicit multiplication
                 Arguments.of("(100/10) * (3+2)", Map.of(), true),
-                Arguments.of("(100/10) * (3+2)\n+2", Map.of(), true), // new line
-                Arguments.of("(100/10) * (3+2)-", Map.of(), false) // operator as last symbol
+                Arguments.of("(100/10) * (3+2)\n+2", Map.of(), false), // new line
+                Arguments.of("(100/10) * (3+2)-", Map.of(), true) // operator as last symbol - makes no sense, but will work
         );
     }
 
@@ -61,7 +62,7 @@ public class BasicTests {
     public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult, boolean shouldSucceed) {
         BigDecimal parsedResult = new BigDecimalExp(scale, roundingMode).debug().parse(expression, params).eval();
         if(shouldSucceed) {
-            assertEquals(0, parsedResult.compareTo(expectedResult));
+            assertEquals(0, parsedResult.compareTo(expectedResult), String.format("Expected: %s / Actual: %s", expectedResult, parsedResult));
         } else {
             assertNotEquals(0, parsedResult.compareTo(expectedResult));
         }
@@ -146,6 +147,18 @@ public class BasicTests {
                         new BigDecimal("21"),
                         true
                 ),
+                Arguments.of(
+                        "(5-2)2",
+                        Map.of(),
+                        new BigDecimal("6"),
+                        true
+                ),
+                Arguments.of(
+                        "(5-2)-2",
+                        Map.of(),
+                        new BigDecimal("-6"),
+                        true
+                ),
                 // implicit multiplication with just one set of parentheses
                 Arguments.of(
                         "3 (5+2)",
@@ -159,17 +172,36 @@ public class BasicTests {
                         Map.of(),
                         new BigDecimal("10"),
                         true
+                ),
+                // negative values
+                Arguments.of(
+                        "-3+(5+2)",
+                        Map.of(),
+                        new BigDecimal("4"),
+                        true
+                ),
+                Arguments.of(
+                        "3+(-5)+2",
+                        Map.of(),
+                        new BigDecimal("0"),
+                        true
+                ),
+                Arguments.of(
+                        "3(-5)",
+                        Map.of(),
+                        new BigDecimal("-15"),
+                        true
                 )
         );
     }
 
     @Test
     public void testOperatorOrder() {
-        assertEquals(BigDecimalExp.operators.get(0), '^');
-        assertEquals(BigDecimalExp.operators.get(1), '*');
-        assertEquals(BigDecimalExp.operators.get(2), '/');
-        assertEquals(BigDecimalExp.operators.get(3), '+');
-        assertEquals(BigDecimalExp.operators.get(4), '-');
+        assertEquals(BigDecimalExp.operators[0], '^');
+        assertEquals(BigDecimalExp.operators[1], '*');
+        assertEquals(BigDecimalExp.operators[2], '/');
+        assertEquals(BigDecimalExp.operators[3], '+');
+        assertEquals(BigDecimalExp.operators[4], '-');
     }
 
     // TODO make this test more exhaustive
@@ -196,38 +228,104 @@ public class BasicTests {
         assertTrue(BigDecimalExp.containsIllegalChar("{0.014000} ^ 2 *\\((13.73/10)+2*13.73+0.014000)")); // backslash
     }
 
-    @Test
-    public void testSpeedDifference() {
-        String expression = "a ^ 2 *((c/10)+b*c+a)";
+    @ParameterizedTest
+    @MethodSource("getSpeedTestArgs")
+    public void testSpeedDifference(String expression, Map<String, BigDecimal> params, Supplier<BigDecimal> nativeBD, BigDecimal expectedResult) {
+
+        int runs = 1_000_000;
+
+        long expStart = System.nanoTime();
+        BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
+        BigDecimal resultExp = null;
+        for(int i = 0; i < runs; i++) {
+            resultExp = bde.eval();
+        }
+        assertTrue(expectedResult.compareTo(resultExp) == 0, String.format("BDExpression results differ! exp: %s; actual: %s", expectedResult, resultExp));
+        long expEnd = System.nanoTime();
+        long expDiff = expEnd - expStart;
+
+        long bdStart = System.nanoTime();
+        BigDecimal resultBd = null;
+        for(int i = 0; i < runs; i++) {
+            resultBd = nativeBD.get();
+        }
+        assertTrue(expectedResult.compareTo(resultBd) == 0, String.format("Native BD results differ! exp: %s; actual: %s", expectedResult, resultBd));
+        long bdEnd = System.nanoTime();
+        long bdDiff = bdEnd - bdStart;
+
+        System.out.println("Native duration seconds: "+String.format(java.util.Locale.US,"%.10f", (bdDiff/1_000_000_000.0)));
+        System.out.println("BigDecimalExp duration seconds: "+String.format(java.util.Locale.US,"%.10f", (expDiff/1_000_000_000.0)));
+
+        // must not take more than 2.2 times the native time
+        double bound = bdDiff*2.5;
+        assertTrue(expDiff < bound, String.format("Failed to calculate within the given runtime limit of %.10f!", bound));
+    }
+
+    private static Stream<Arguments> getSpeedTestArgs() {
         BigDecimal a1 = new BigDecimal("0.014000");
         BigDecimal b1 = new BigDecimal("2");
         BigDecimal c1 = new BigDecimal("13.73");
 
-        int runs = 10_000_000;
+        BigDecimal a2 = new BigDecimal("17000000000");
+        BigDecimal b2 = new BigDecimal("1000000");
+        BigDecimal c2 = new BigDecimal("18");
+        BigDecimal d2 = new BigDecimal("5");
+        BigDecimal e2 = new BigDecimal("13");
+        BigDecimal f2 = new BigDecimal("1");
+        BigDecimal g2 = new BigDecimal("10");
+        BigDecimal h2 = new BigDecimal("2");
 
-
-        Map<String, BigDecimal> params = Map.of("a", a1, "b", b1, "c", c1);
-        long expStart = System.nanoTime();
-        BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
-        for(int i = 0; i < runs; i++) {
-            BigDecimal result = bde.eval();
-        }
-        long expEnd = System.nanoTime();
-        long expDiff = expEnd - expStart;
-
-
-        long bdStart = System.nanoTime();
-        for(int i = 0; i < runs; i++) {
-            BigDecimal result = new BigDecimal("0.014000").pow(new BigDecimal("2").intValue()).multiply(
-                    new BigDecimal("13.73").divide(new BigDecimal("10"), scale, roundingMode).add(new BigDecimal("2").multiply(new BigDecimal("13.73"))).add(new BigDecimal("0.014000"))
-            );
-        }
-        long bdEnd = System.nanoTime();
-        long bdDiff = bdEnd - bdStart;
-
-        long percentage = (expDiff / bdDiff) * 10;
-        System.out.println("BigDecimal native time compared to BigDecimalExp in percent: "+percentage);
-        System.out.println("Native duration seconds: "+(bdDiff/1_000_000_000));
-        System.out.println("BigDecimalExp duration seconds: "+(expDiff/1_000_000_000));
+        return Stream.of(
+                Arguments.of(
+                        "a^b*((c/d)+b*c+a)",
+                        Map.of("a", a1, "b", b1, "c", c1, "d", BigDecimal.TEN),
+                        (Supplier<BigDecimal>)() -> {
+                            return new BigDecimal("0.014000").pow(new BigDecimal("2").intValue()).multiply(
+                                    new BigDecimal("13.73").divide(new BigDecimal("10"), scale, roundingMode).add(new BigDecimal("2").multiply(new BigDecimal("13.73"))).add(new BigDecimal("0.014000"))
+                            );
+                        },
+                        new BigDecimal("0.005654012")
+                ),
+                Arguments.of(
+                        "(a/b+f)*g+(c-g/d-e)/h",
+                        Map.of("a", a2, "b", b2, "c", c2, "d", d2, "e", e2, "f", f2, "g", g2, "h", h2),
+                        (Supplier<BigDecimal>) () -> {
+                            return new BigDecimal("17000000000")
+                                    .divide(new BigDecimal("1000000"), scale, roundingMode)
+                                    .add(new BigDecimal("1"))
+                                    .multiply(new BigDecimal("10"))
+                                    .add(
+                                            new BigDecimal("18")
+                                                    .subtract(
+                                                            new BigDecimal("10")
+                                                                    .divide(new BigDecimal("5"), scale, roundingMode)
+                                                    )
+                                                    .subtract(new BigDecimal("13"))
+                                                    .divide(new BigDecimal("2"), scale, roundingMode)
+                                    );
+                        },
+                        new BigDecimal("170011.5")
+                ),
+                Arguments.of(
+                        "(17000000000/1000000+1)*10+(18-10/5-13)/2",
+                        Map.of(),
+                        (Supplier<BigDecimal>) () -> {
+                            return new BigDecimal("17000000000")
+                                    .divide(new BigDecimal("1000000"), scale, roundingMode)
+                                    .add(new BigDecimal("1"))
+                                    .multiply(new BigDecimal("10"))
+                                    .add(
+                                            new BigDecimal("18")
+                                                    .subtract(
+                                                            new BigDecimal("10")
+                                                                    .divide(new BigDecimal("5"), scale, roundingMode)
+                                                    )
+                                                    .subtract(new BigDecimal("13"))
+                                                    .divide(new BigDecimal("2"), scale, roundingMode)
+                                    );
+                        },
+                        new BigDecimal("170011.5")
+                )
+        );
     }
 }
