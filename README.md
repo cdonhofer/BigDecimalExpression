@@ -94,20 +94,20 @@ try {
 * work as you would expect from any mathematical expression;
 * terms/sub-expressions in parentheses are evaluated first, before outer operations are applied
 ### POW
-* character: ^
+* symbol: ^
 * usage: a ^ b
 * automatically uses the intValue of b, when b is a BigDecimal
 ### MULTIPLICATION
-* character: * or parentheses for implicit multiplication
+* symbol: * or parentheses for implicit multiplication
 * usage: a * b OR a (b) or (c+d)(e-f) ...
 ### DIVISION
-* character: /
+* symbol: /
 * usage: a / b
 ### ADDITION
-* character: +
+* symbol: +
 * usage: a + b
 ### SUBTRACTION
-* character: -
+* symbol: -
 * usage: a - b
 
 ## Expressions
