@@ -124,5 +124,6 @@ is quite a bit faster than other, even commercial, expression parsers.
 Still, improving the speed of BigDecimalExpression is one of the main goals for future versions.
 
 ## Future improvements / ongoing work
-* cache parsed raw values in a BigDecimal map, to avoid the cost of repeatedly converting the same values to BigDecimal
+* improve runtime
 * create bug tracker
+* publish to repos
