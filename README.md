@@ -118,7 +118,7 @@ Expressions follow the usual mathematical rules(e.g. left-to-right evaluation). 
 
 ## Speed
 Currently, the test suite validates the runtime of BDE expressions to be no more than 2.5 times 
-that of native BigDecimal. Usually, they are a lot closer, i.e. only 1.6 times the native implementation's duration, which
+that of native BigDecimal. Usually, they are a lot closer, i.e. BDE is only 1.6 times the native implementation's duration, which
 is quite a bit faster than other, even commercial, expression parsers.
 
 Still, improving the speed of BigDecimalExpression is one of the main goals for future versions.
