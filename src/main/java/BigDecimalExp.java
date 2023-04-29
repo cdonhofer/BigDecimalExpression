@@ -63,6 +63,11 @@ public class BigDecimalExp {
         return parse(exp, varsMap);
     }
 
+    public BigDecimalExp parse(String exp) throws BigDecimalExpException {
+        Map<String, BigDecimal> varsMap = new HashMap<>();
+        return parse(exp, varsMap);
+    }
+
     public BigDecimalExp parse(String exp, Map<String, BigDecimal> vars) throws BigDecimalExpException {
         // remove spaces from expression
         this.exp = exp.replace(" ", "");
