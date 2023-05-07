@@ -7,18 +7,35 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * class providing utilities for parsing, evaluating and validation mathematical expressions in BigDecimal
+ */
 public class BigDecimalExpression {
+    /**
+     * default scale, used when nothing is passed with constructor
+     */
     public static final int defaultScale = 5;
+    /**
+     * default rounding mode, used when nothing is passed with constructor
+     */
     public static final RoundingMode defaultRoundingMode = RoundingMode.HALF_UP;
 
-    // operator symbols
-    public static final char ADD = '+';
-    public static final char SUBTRACT = '-';
-    public static final char MULTIPLY = '*';
-    public static final char DIVIDE = '/';
-    public static final char POW = '^';
+    /**
+     * operator symbols
+     */
+    private static final char ADD = '+';
+    private static final char SUBTRACT = '-';
+    private static final char MULTIPLY = '*';
+    private static final char DIVIDE = '/';
+    private static final char POW = '^';
 
+    /**
+     * regular expressions for valid chars
+     */
     public static final String VALID_VAR_REGEX = "[a-zA-Z_$][a-zA-Z_$0-9]*";
+    /**
+     * regular expressions for illegal chars
+     */
     public static final String ILLEGAL_CHARS_REGEX = "[^a-zA-Z0-9.\\-+*/^_ ()]";
 
     /*
@@ -34,16 +51,29 @@ public class BigDecimalExpression {
     // debug flag makes this very verbose
     boolean debug = false;
 
+    /**
+     *
+     * create an Instance of BigDecimalExpression with the given scale and rounding mode
+     * @param scale the scale for division operations
+     * @param roundingMode the rounding mode for division operations
+     */
     public BigDecimalExpression(int scale, RoundingMode roundingMode) {
         this.roundingMode = roundingMode;
         this.scale = scale;
     }
 
+    /**
+     * create an Instance of BigDecimalExpression with the default scale and rounding mode
+     */
     public BigDecimalExpression() {
         this.roundingMode = defaultRoundingMode;
         this.scale = defaultScale;
     }
 
+    /**
+     * enables debugging
+     * @return this instance with debugging enabled
+     */
     public BigDecimalExpression debug() {
         debug = true;
         return this;
@@ -344,6 +374,11 @@ public class BigDecimalExpression {
         return new String(currentExp);
     }
 
+    /**
+     * extract a list of all variables in the given expression
+     * @param exp the mathematical expression
+     * @return the list of extracted variables
+     */
     public static List<String> extractVariables(String exp) {
         return Pattern.compile(VALID_VAR_REGEX)
                 .matcher(exp)
@@ -352,6 +387,11 @@ public class BigDecimalExpression {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * check if illegal characters are contained in the given expression
+     * @param exp the mathematical expression
+     * @return true if illegal chars were found, else false
+     */
     public static boolean containsIllegalChar(String exp) {
         return Pattern.compile(ILLEGAL_CHARS_REGEX)
                 .matcher(exp)
