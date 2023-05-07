@@ -20,8 +20,7 @@ Allows you to write your BigDecimal code like this
 
 ```Java
     BigDecimal a = new BigDecimal("17000000000");
-   ```
-   BigDecimal b = new BigDecimal("1000000");
+    BigDecimal b = new BigDecimal("1000000");
     BigDecimal c = new BigDecimal("18");
     BigDecimal d = new BigDecimal("5");
     BigDecimal e = new BigDecimal("13");
