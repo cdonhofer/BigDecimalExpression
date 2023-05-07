@@ -7,7 +7,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class BigDecimalExp {
+public class BigDecimalExpression {
     public static final int defaultScale = 5;
     public static final RoundingMode defaultRoundingMode = RoundingMode.HALF_UP;
 
@@ -34,17 +34,17 @@ public class BigDecimalExp {
     // debug flag makes this very verbose
     boolean debug = false;
 
-    public BigDecimalExp(int scale, RoundingMode roundingMode) {
+    public BigDecimalExpression(int scale, RoundingMode roundingMode) {
         this.roundingMode = roundingMode;
         this.scale = scale;
     }
 
-    public BigDecimalExp() {
+    public BigDecimalExpression() {
         this.roundingMode = defaultRoundingMode;
         this.scale = defaultScale;
     }
 
-    public BigDecimalExp debug() {
+    public BigDecimalExpression debug() {
         debug = true;
         return this;
     }
@@ -57,7 +57,7 @@ public class BigDecimalExp {
      * @throws BigDecimalExpException an unchecked exception that contains error details
      */
     @SafeVarargs
-    public final BigDecimalExp parse(String exp, Map.Entry<String, BigDecimal>... vars) throws BigDecimalExpException {
+    public final BigDecimalExpression parse(String exp, Map.Entry<String, BigDecimal>... vars) throws BigDecimalExpException {
         Map<String, BigDecimal> varsMap = new HashMap<>();
         for(Map.Entry<String, BigDecimal> var : vars) {
             varsMap.put(var.getKey(), var.getValue());
@@ -72,7 +72,7 @@ public class BigDecimalExp {
      * @return the BigDecimalExp instance
      * @throws BigDecimalExpException an unchecked exception that contains error details
      */
-    public BigDecimalExp parse(String exp) throws BigDecimalExpException {
+    public BigDecimalExpression parse(String exp) throws BigDecimalExpException {
         Map<String, BigDecimal> varsMap = new HashMap<>();
         return parse(exp, varsMap, false);
     }
@@ -84,11 +84,11 @@ public class BigDecimalExp {
      * @return the BigDecimalExp instance
      * @throws BigDecimalExpException an unchecked exception that contains error details
      */
-    public BigDecimalExp parse(String exp, Map<String, BigDecimal> vars) throws BigDecimalExpException {
+    public BigDecimalExpression parse(String exp, Map<String, BigDecimal> vars) throws BigDecimalExpException {
         return parse(exp, vars, true);
     }
 
-    private BigDecimalExp parse(String exp, Map<String, BigDecimal> vars, boolean createMutableCopy) throws BigDecimalExpException {
+    private BigDecimalExpression parse(String exp, Map<String, BigDecimal> vars, boolean createMutableCopy) throws BigDecimalExpException {
         // remove spaces from expression
         this.exp = exp.replace(" ", "");
         this.chars = this.exp.toCharArray();

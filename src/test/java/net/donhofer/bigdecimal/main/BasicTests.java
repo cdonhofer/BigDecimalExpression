@@ -1,6 +1,6 @@
 package net.donhofer.bigdecimal.main;
 
-import net.donhofer.bigdecimal.BigDecimalExp;
+import net.donhofer.bigdecimal.BigDecimalExpression;
 import net.donhofer.bigdecimal.BigDecimalExpException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,10 +31,10 @@ public class BasicTests {
     public void testParser(String expression, Map<String, BigDecimal> params, boolean shouldSucceed) {
         if(!shouldSucceed) {
             assertThrows(BigDecimalExpException.class, () -> {
-                BigDecimal parsedResult = new BigDecimalExp().debug().parse(expression, params).eval();
+                BigDecimal parsedResult = new BigDecimalExpression().debug().parse(expression, params).eval();
             }, "The expression should have thrown an exception: "+expression);
         } else {
-            BigDecimal parsedResult = new BigDecimalExp().debug().parse(expression, params).eval();
+            BigDecimal parsedResult = new BigDecimalExpression().debug().parse(expression, params).eval();
         }
     }
 
@@ -64,7 +64,7 @@ public class BasicTests {
     @ParameterizedTest
     @MethodSource("getReducerExpressions")
     public void testCalculation(String expression, Map<String, BigDecimal> params, BigDecimal expectedResult, boolean shouldSucceed) {
-        BigDecimal parsedResult = new BigDecimalExp(scale, roundingMode).debug().parse(expression, params).eval();
+        BigDecimal parsedResult = new BigDecimalExpression(scale, roundingMode).debug().parse(expression, params).eval();
         if(shouldSucceed) {
             assertEquals(0, parsedResult.compareTo(expectedResult), String.format("Expected: %s / Actual: %s", expectedResult, parsedResult));
         } else {
@@ -202,7 +202,7 @@ public class BasicTests {
     // TODO make this test more exhaustive
     @Test
     public void testVariableExtraction() {
-        List<String> params = BigDecimalExp.extractVariables("a ^ 2 *myVar+SOMETHING_BIG((c/10)+b*c+a)");
+        List<String> params = BigDecimalExpression.extractVariables("a ^ 2 *myVar+SOMETHING_BIG((c/10)+b*c+a)");
         List<String> expected = List.of("a", "myVar", "SOMETHING_BIG", "c", "b");
 
         assertTrue(params.containsAll(expected));
@@ -213,14 +213,14 @@ public class BasicTests {
      */
     @Test
     public void testIllegalCharDetection() {
-        assertFalse(BigDecimalExp.containsIllegalChar("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000) - 1"));
-        assertTrue(BigDecimalExp.containsIllegalChar("0.014000 ^ 2: *((13.73/10)+2*13.73+0.014000)")); // colon
-        assertTrue(BigDecimalExp.containsIllegalChar("0,014000 ^ 2 *((13.73/10)+2*13.73+0.014000)")); // comma
-        assertTrue(BigDecimalExp.containsIllegalChar("0.014000 ^ 2 *([13.73/10]+2*13.73+0.014000)")); // square brackets
-        assertTrue(BigDecimalExp.containsIllegalChar("0.014000 ^ 2 *((13.73/10)+2*13.7>3+0.014000)<")); // less/larger than signs
-        assertTrue(BigDecimalExp.containsIllegalChar("0.014000 ^ 2%1 *((13.73/10)+2*13.73+0.014000)")); // percent sign/modulo operator
-        assertTrue(BigDecimalExp.containsIllegalChar("{0.014000} ^ 2 *((13.73/10)+2*13.73+0.014000)")); // curly braces
-        assertTrue(BigDecimalExp.containsIllegalChar("{0.014000} ^ 2 *\\((13.73/10)+2*13.73+0.014000)")); // backslash
+        assertFalse(BigDecimalExpression.containsIllegalChar("0.014000 ^ 2 *((13.73/10)+2*13.73+0.014000) - 1"));
+        assertTrue(BigDecimalExpression.containsIllegalChar("0.014000 ^ 2: *((13.73/10)+2*13.73+0.014000)")); // colon
+        assertTrue(BigDecimalExpression.containsIllegalChar("0,014000 ^ 2 *((13.73/10)+2*13.73+0.014000)")); // comma
+        assertTrue(BigDecimalExpression.containsIllegalChar("0.014000 ^ 2 *([13.73/10]+2*13.73+0.014000)")); // square brackets
+        assertTrue(BigDecimalExpression.containsIllegalChar("0.014000 ^ 2 *((13.73/10)+2*13.7>3+0.014000)<")); // less/larger than signs
+        assertTrue(BigDecimalExpression.containsIllegalChar("0.014000 ^ 2%1 *((13.73/10)+2*13.73+0.014000)")); // percent sign/modulo operator
+        assertTrue(BigDecimalExpression.containsIllegalChar("{0.014000} ^ 2 *((13.73/10)+2*13.73+0.014000)")); // curly braces
+        assertTrue(BigDecimalExpression.containsIllegalChar("{0.014000} ^ 2 *\\((13.73/10)+2*13.73+0.014000)")); // backslash
     }
 
     @ParameterizedTest
@@ -230,7 +230,7 @@ public class BasicTests {
         int runs = 1_500_000;
 
         long expStart = System.nanoTime();
-        BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
+        BigDecimalExpression bde = new BigDecimalExpression(scale, roundingMode).parse(expression, params);
         BigDecimal resultExp = null;
         for(int i = 0; i < runs; i++) {
             resultExp = bde.eval();
