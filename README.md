@@ -1,4 +1,4 @@
-# BigDecimalExpressionression
+# BigDecimalExpression
 Simple, readable and reasonably fast BigDecimal usage in Java
 
 Allows you to write your BigDecimal code like this
