@@ -1,10 +1,27 @@
 # BigDecimalExpression
 Simple, readable and reasonably fast BigDecimal usage in Java
 
+Gradle:
+```
+implementation 'net.donhofer:big-decimal-expression:1.0.0'
+```
+
+Maven:
+```
+<dependency>
+    <groupId>net.donhofer</groupId>
+    <artifactId>big-decimal-expression</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+# What it is
 Allows you to write your BigDecimal code like this
+
 ```Java
     BigDecimal a = new BigDecimal("17000000000");
-    BigDecimal b = new BigDecimal("1000000");
+   ```
+   BigDecimal b = new BigDecimal("1000000");
     BigDecimal c = new BigDecimal("18");
     BigDecimal d = new BigDecimal("5");
     BigDecimal e = new BigDecimal("13");
