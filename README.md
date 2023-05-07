@@ -1,4 +1,4 @@
-# BigDecimalExpression
+# BigDecimalExpressionression
 Simple, readable and reasonably fast BigDecimal usage in Java
 
 Allows you to write your BigDecimal code like this
@@ -16,7 +16,7 @@ Allows you to write your BigDecimal code like this
         "e", e, "f", f, "g", g, "h", h
     );
     
-    BigDecimal result = new BigDecimalExp(scale, roundingMode)
+    BigDecimal result = new BigDecimalExpression(scale, roundingMode)
         .parse("(a/b+f)*g+(c-g/d-e)/h", params)
         .eval();
 ```
@@ -42,7 +42,7 @@ BigDecimal result = new BigDecimal("17000000000")
 ## Usage Examples
 ```Java
     // create reusable expression parser
-    BigDecimalExp bde = new BigDecimalExp(scale, roundingMode);
+    BigDecimalExpression bde = new BigDecimalExpression(scale, roundingMode);
     
     // call using a map
     BigDecimal result = bde.parse(
@@ -64,12 +64,12 @@ BigDecimal result = new BigDecimal("17000000000")
 
 ## Validation and Error Handling
 
-BigDecimalExp, like BigDecimal, throws only unchecked exceptions. In situations that allow you
+BigDecimalExpression, like BigDecimal, throws only unchecked exceptions. In situations that allow you
  to recover from errors, you can use the following mechanisms.
 
 ```Java
 // use the state-testing method
-BigDecimalExp bde = new BigDecimalExp(scale, roundingMode).parse(expression, params);
+BigDecimalExpression bde = new BigDecimalExpression(scale, roundingMode).parse(expression, params);
 if(!bde.isValid()){
     // ...
 }
@@ -83,7 +83,7 @@ etc.; See the test cases or the class itself for more possibilities.
 // catch possible exceptions
 try {
     result = bde.eval();
-} catch (BigDecimalExpException bde) {
+} catch (BigDecimalExpressionException bde) {
     // ...
 }
 ```
@@ -121,7 +121,7 @@ Currently, the test suite validates the runtime of BDE expressions to be no more
 that of native BigDecimal. Usually, they are a lot closer, i.e. BDE is only 1.6 times the native implementation's duration, which
 is quite a bit faster than other, even commercial, expression parsers.
 
-Still, improving the speed of BigDecimalExpression is one of the main goals for future versions.
+Still, improving the speed of BigDecimalExpressionression is one of the main goals for future versions.
 
 ## Future improvements / ongoing work
 * improve runtime
