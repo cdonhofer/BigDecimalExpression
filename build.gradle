@@ -1,19 +1,74 @@
 plugins {
     id 'java'
     id 'maven-publish'
+    id 'signing'
 }
 
 group 'net.donhofer'
-version '1.0-SNAPSHOT'
+version '1.0.0'
 repositories {
     mavenCentral()
 }
+
 
 java {
     withJavadocJar()
     withSourcesJar()
 }
 
+signing {
+    sign publishing.publications
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'net.donhofer'
+            artifactId = 'big-decimal-expression'
+            version = "1.0.0"
+            from components.java
+
+            pom {
+                name = 'BigDecimalExpression'
+                description = 'Simple, readable and reasonably fast BigDecimal usage in Java'
+                url = 'https://github.com/cdonhofer/BigDecimalExpression'
+
+                scm {
+                    connection = 'scm:git:git://github.com/cdonhofer/BigDecimalExpression.git'
+                    developerConnection = 'scm:git:git://github.com/cdonhofer/BigDecimalExpression.git'
+                    url = 'https://github.com/cdonhofer/BigDecimalExpression'
+                }
+
+                licenses {
+                    license {
+                        name = 'Mozilla Public License 2.0'
+                        url = 'https://www.mozilla.org/en-US/MPL/2.0/'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'cdonhofer'
+                        name = 'Christian Donhofer'
+                        email = 'christian@donhofer.net'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "OSSRH"
+            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            credentials {
+                username = ossrhUsername
+                password = ossrhPassword
+            }
+        }
+
+    }
+}
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
